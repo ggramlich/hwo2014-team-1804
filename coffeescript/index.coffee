@@ -1,5 +1,6 @@
 connectAndCreateBotController = require './lib/initialConnection'
-bot = require './lib/bot'
+Bot = require './lib/bot'
+Bots = [Bot]
 
 serverHost = process.argv[2]
 serverPort = process.argv[3]
@@ -9,13 +10,13 @@ botKey = process.argv[5]
 if process.env.TESTRACE?
   testRace =
     trackName: 'keimola'
-    carCount: 1
+    carCount: 4
 
-console.log("I'm", botName, "and connect to", serverHost + ":" + serverPort)
+console.log "I'm #{botName} and connect to #{serverHost}:#{serverPort}"
 
 botData =
   name: botName
   key: botKey
 
 botController = connectAndCreateBotController botData, serverPort, serverHost, testRace
-botController.control bot
+botController.control Bots

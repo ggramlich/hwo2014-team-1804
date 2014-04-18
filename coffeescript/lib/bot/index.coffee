@@ -1,3 +1,4 @@
 module.exports =
-  carPositions: (data, control) ->
-    control.throttle 0.64
+  class Bot
+    carPositions: (data, control) ->
+      control.throttle 0.656
