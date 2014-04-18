@@ -1,15 +1,17 @@
 net        = require("net")
 JSONStream = require('JSONStream')
 
-module.exports = (botData, serverPort, serverHost) ->
-  initialMessage = {msgType: "join", data: botData}
-  initialMessage =
-    msgType: "createRace"
-    data:
-      botId: botData
-      trackName: "keimola"
-      password: "gggg"
-      carCount: 1
+module.exports = (botData, serverPort, serverHost, testRace) ->
+  if testRace?
+    initialMessage =
+      msgType: "createRace"
+      data:
+        botId: botData
+        trackName: testRace.trackName
+        password: "gggg"
+        carCount: testRace.carCount ? 1
+  else
+    initialMessage = {msgType: "join", data: botData}
 
   client = net.connect serverPort, serverHost, () ->
     send(initialMessage)

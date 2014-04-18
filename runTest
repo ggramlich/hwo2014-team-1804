@@ -1,0 +1,5 @@
+#!/bin/bash -e
+
+export TESTRACE=1
+source ./run
+
