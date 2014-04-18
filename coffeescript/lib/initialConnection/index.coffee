@@ -1,25 +1,8 @@
-net        = require("net")
-JSONStream = require('JSONStream')
 messages   = require './messages'
 
 module.exports = (botData, serverPort, serverHost, testRace) ->
+  connections = (require './connections')(serverPort, serverHost)
   initialMessages = messages.initial botData, testRace
-
-  createConnection = (initialMessage) ->
-    client = net.connect serverPort, serverHost, () ->
-      send(initialMessage)
-
-    send = (json) ->
-      jsonString = JSON.stringify(json)
-      console.log 'SENDING: ' + jsonString
-      client.write jsonString
-      client.write '\n'
-
-    jsonStream = client.pipe(JSONStream.parse())
-
-    return {send, jsonStream}
-
-#  connections = (createConnection(initialMessage) for initialMessage in initialMessages)
 
   createControl = (connection) ->
     send = connection.send
@@ -46,7 +29,7 @@ module.exports = (botData, serverPort, serverHost, testRace) ->
     for Bot in Bots
       ((messageIndex) ->
         setTimeout ->
-          connection = createConnection(initialMessages[messageIndex])
+          connection = connections.create(initialMessages[messageIndex])
           jsonStream = connection.jsonStream
 
           jsonStream.on 'error', ->
