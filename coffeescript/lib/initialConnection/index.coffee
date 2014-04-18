@@ -1,28 +1,9 @@
 net        = require("net")
 JSONStream = require('JSONStream')
+messages   = require './messages'
 
 module.exports = (botData, serverPort, serverHost, testRace) ->
-  carCount = 1
-  if testRace?
-    carCount = testRace.carCount ? 1
-    createData = (index) ->
-      botId:
-        key: botData.key
-        name: botData.name + index
-      trackName: testRace.trackName
-      password: "gggg"
-      carCount: carCount
-    initialMessages = [
-      msgType: "createRace"
-      data: createData('')
-    ]
-    index = 1
-    while initialMessages.length < carCount
-      initialMessages.push
-        msgType: "joinRace"
-        data: createData(index++)
-  else
-    initialMessages = [msgType: "join", data: botData]
+  initialMessages = messages.initial botData, testRace
 
   createConnection = (initialMessage) ->
     client = net.connect serverPort, serverHost, () ->
@@ -56,8 +37,8 @@ module.exports = (botData, serverPort, serverHost, testRace) ->
 
   control: (originalBots) ->
     Bots = []
-    while Bots.length < carCount
-      # append a copy of the Bots array
+    while Bots.length < initialMessages.length
+      # append all Bots of the originalBots array
       for Bot in originalBots
         Bots.push Bot
 
