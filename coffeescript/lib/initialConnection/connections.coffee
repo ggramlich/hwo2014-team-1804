@@ -2,9 +2,10 @@ net        = require("net")
 JSONStream = require('JSONStream')
 
 module.exports = (serverPort, serverHost) ->
-  create: (message) ->
+  create: (message, callback) ->
     client = net.connect serverPort, serverHost, () ->
       send(message)
+      callback()
 
     send = (json) ->
       jsonString = JSON.stringify(json)
