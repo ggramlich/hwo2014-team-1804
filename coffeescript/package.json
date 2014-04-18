@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "coffee-script": "1.6.2",
-    "JSONStream":    "0.6.4"
+    "JSONStream": "0.6.4",
+    "async": "~0.7.0"
   }
 }
