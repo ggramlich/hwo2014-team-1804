@@ -1,22 +1,19 @@
-connectAndCreateBotController = require './lib/initialConnection'
-Bot = require './lib/bot'
-Bots = [Bot]
+CoolBeans = require 'CoolBeans'
+container = new CoolBeans require './production-module'
 
-serverHost = process.argv[2]
-serverPort = process.argv[3]
-botName = process.argv[4]
-botKey = process.argv[5]
+[serverHost, serverPort, name, key] = process.argv[2..]
 
 if process.env.TESTRACE?
   testRace =
     trackName: 'keimola'
     carCount: 4
 
-console.log "I'm #{botName} and connect to #{serverHost}:#{serverPort}"
+console.log "I'm #{name} and connect to #{serverHost}:#{serverPort}"
 
-botData =
-  name: botName
-  key: botKey
+botData = {name, key}
+
+connectAndCreateBotController = container.get 'initialConnection'
+Bots = [container.get 'bot']
 
 botController = connectAndCreateBotController botData, serverPort, serverHost, testRace
 botController.control Bots

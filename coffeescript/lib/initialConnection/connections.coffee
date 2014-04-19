@@ -1,18 +1,16 @@
-net        = require("net")
-JSONStream = require('JSONStream')
+module.exports = (net, JSONStream) ->
+  for: (serverPort, serverHost) ->
+    create: (message, callback) ->
+      client = net.connect serverPort, serverHost, () ->
+        send message
+        callback()
 
-module.exports = (serverPort, serverHost) ->
-  create: (message, callback) ->
-    client = net.connect serverPort, serverHost, () ->
-      send(message)
-      callback()
+      send = (json) ->
+        jsonString = JSON.stringify(json)
+        console.log 'SENDING: ' + jsonString
+        client.write jsonString
+        client.write '\n'
 
-    send = (json) ->
-      jsonString = JSON.stringify(json)
-      console.log 'SENDING: ' + jsonString
-      client.write jsonString
-      client.write '\n'
+      jsonStream = client.pipe(JSONStream.parse())
 
-    jsonStream = client.pipe(JSONStream.parse())
-
-    return {send, jsonStream}
+      return {send, jsonStream}
