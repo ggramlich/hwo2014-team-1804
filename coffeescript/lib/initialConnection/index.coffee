@@ -21,17 +21,19 @@ module.exports = (botData, serverPort, serverHost, testRace) ->
 
   botStarter = (Bot, initialMessage) ->
     (callback) ->
+      bot = null
       connection = connections.create(initialMessage, callback)
       jsonStream = connection.jsonStream
 
       jsonStream.on 'error', ->
         console.log "disconnected"
 
-      bot = new Bot
       jsonStream.on 'data', (data) ->
+        if data.msgType is 'yourCar'
+          bot = new Bot data.data
         dataString = JSON.stringify(data)
         console.log 'RECEIVE: ' + dataString
-        bot[data.msgType]? data, createControl(connection)
+        bot?[data.msgType]? data, createControl(connection)
 
 
   control: (originalBots) ->
