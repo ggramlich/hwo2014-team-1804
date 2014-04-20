@@ -1,6 +1,6 @@
 module.exports =
   class Bot
-    constructor: ({@name, @color}) ->
+    constructor: ({@name, @color}, @race) ->
       if @color is 'red'
         @throttle = 0.602
       else

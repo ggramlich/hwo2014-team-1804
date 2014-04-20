@@ -7,6 +7,9 @@ module.exports =
   connections:
     module: 'lib/initialConnection/connections'
     autowire: on
+  race:
+    module: 'lib/bot/race'
+    autowire: on
   bot:
     module: 'lib/bot'
   async:

@@ -1,4 +1,4 @@
-module.exports = (messages, async, connections) ->
+module.exports = (messages, async, connections, race) ->
   createControl = (connection) ->
     send = connection.send
     called = no
@@ -19,6 +19,7 @@ module.exports = (messages, async, connections) ->
     botStarter = (Bot, initialMessage) ->
       (callback) ->
         bot = null
+        carData = null
         connection = connections.for(serverPort, serverHost).create(initialMessage, callback)
         jsonStream = connection.jsonStream
 
@@ -26,11 +27,15 @@ module.exports = (messages, async, connections) ->
           console.log "disconnected"
 
         jsonStream.on 'data', (data) ->
-          if data.msgType is 'yourCar'
-            bot = new Bot data.data
           dataString = JSON.stringify(data)
           console.log 'RECEIVE: ' + dataString
-          bot?[data.msgType]? data, createControl(connection)
+
+          msgType = data.msgType
+          if msgType is 'yourCar'
+            carData = data.data
+          else if msgType is 'gameInit'
+            bot = new Bot carData, race.create(data.data.race)
+          bot?[msgType]? data, createControl(connection)
 
 
     control: (originalBots) ->
