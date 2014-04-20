@@ -16,4 +16,7 @@ module.exports = ->
 #      console.log @cars
 #      console.log @raceSession
 
+    distance: (piecePosition) ->
+      0.0
+
   create: (raceData) -> new Race raceData
