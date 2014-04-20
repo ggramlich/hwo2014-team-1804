@@ -3,6 +3,7 @@ container = new CoolBeans require './production-module'
 
 [serverHost, serverPort, name, key] = process.argv[2..]
 
+# keimola, germany, usa
 if process.env.TESTRACE?
   testRace =
     trackName: 'keimola'
