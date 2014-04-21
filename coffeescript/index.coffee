@@ -8,6 +8,7 @@ if process.env.TESTRACE?
   testRace =
     trackName: 'keimola'
     carCount: 4
+    joinOnly: off
 
 console.log "I'm #{name} and connect to #{serverHost}:#{serverPort}"
 
