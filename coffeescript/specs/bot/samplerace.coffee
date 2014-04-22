@@ -1,64 +1,200 @@
 module.exports =
   track:
-    id: "indianapolis"
-    name: "Indianapolis"
+    id: "keimola"
+    name: "Keimola"
     pieces: [
       {
-        length: 100.0
+        length: 100
       }
       {
-        length: 100.0
+        length: 100
+      }
+      {
+        length: 100
+      }
+      {
+        length: 100
         switch: true
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        radius: 200
+        angle: 22.5
+        switch: true
+      }
+      {
+        length: 100
+      }
+      {
+        length: 100
+      }
+      {
+        radius: 200
+        angle: -22.5
+      }
+      {
+        length: 100
+      }
+      {
+        length: 100
+        switch: true
+      }
+      {
+        radius: 100
+        angle: -45
+      }
+      {
+        radius: 100
+        angle: -45
+      }
+      {
+        radius: 100
+        angle: -45
+      }
+      {
+        radius: 100
+        angle: -45
+      }
+      {
+        length: 100
+        switch: true
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        radius: 100
+        angle: 45
       }
       {
         radius: 200
         angle: 22.5
       }
+      {
+        radius: 200
+        angle: -22.5
+      }
+      {
+        length: 100
+        switch: true
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        length: 62
+      }
+      {
+        radius: 100
+        angle: -45
+        switch: true
+      }
+      {
+        radius: 100
+        angle: -45
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        radius: 100
+        angle: 45
+      }
+      {
+        length: 100
+        switch: true
+      }
+      {
+        length: 100
+      }
+      {
+        length: 100
+      }
+      {
+        length: 100
+      }
+      {
+        length: 90
+      }
     ]
     lanes: [
       {
-        distanceFromCenter: -20
+        distanceFromCenter: -10
         index: 0
       }
       {
-        distanceFromCenter: 0
+        distanceFromCenter: 10
         index: 1
-      }
-      {
-        distanceFromCenter: 20
-        index: 2
       }
     ]
     startingPoint:
       position:
-        x: -340.0
-        y: -96.0
+        x: -300
+        y: -44
 
-      angle: 90.0
+      angle: 90
 
   cars: [
     {
       id:
-        name: "Schumacher"
+        name: "ggramlich"
         color: "red"
 
       dimensions:
-        length: 40.0
-        width: 20.0
-        guideFlagPosition: 10.0
+        length: 40
+        width: 20
+        guideFlagPosition: 10
     }
     {
       id:
-        name: "Rosberg"
+        name: "ggramlich1"
         color: "blue"
 
       dimensions:
-        length: 40.0
-        width: 20.0
-        guideFlagPosition: 10.0
+        length: 40
+        width: 20
+        guideFlagPosition: 10
     }
   ]
   raceSession:
     laps: 3
-    maxLapTimeMs: 30000
+    maxLapTimeMs: 60000
     quickRace: true
