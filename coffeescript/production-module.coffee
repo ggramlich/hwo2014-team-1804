@@ -18,3 +18,5 @@ module.exports =
     module: 'net'
   JSONStream:
     module: 'JSONStream'
+  objects:
+    module: 'objects'
