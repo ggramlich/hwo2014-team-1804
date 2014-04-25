@@ -17,27 +17,41 @@ module.exports = (objects) ->
       index = ((normalizedIndex % @pieces.length) + @pieces.length) % @pieces.length
       @pieces[index]
 
-    addPiecesLengthsBetween: (initialPosition, piecePosition) ->
+    addPiecesLengthsBetween: (initialPosition, piecePosition, carLane) ->
       indices = [(@normalizedPieceIndex initialPosition)...(@normalizedPieceIndex piecePosition)]
-      indices.reduce ((sum, index) => sum + @pieceAt(index).length), -initialPosition.inPieceDistance
+      indices.reduce ((sum, index) => sum + @pieceLength index, carLane), -initialPosition.inPieceDistance
+
+    pieceLength: (index, carLane) ->
+      piece = @pieceAt(index)
+      if (piece.length?)
+        piece.length
+      else
+        {radius, angle} = piece
+        bended = if angle < 0 then 1 else -1
+        {startLaneIndex, endLaneIndex} = carLane.atIndex index
+        laneRadius = radius + bended * @lanes.distanceFromCenter[endLaneIndex]
+        laneRadius * Math.PI * Math.abs(angle) / 180
 
   class Race
     constructor: ({track, @cars, @raceSession}) ->
-      race = this
       @track = new Track track
       @carLanes = []
       for car in @cars
-        @carLanes[car.id.color] = new CarLane @track.normalizedPieceIndex
+        @carLanes[car.id.color] = @createCarLane()
 
-    distance: (piecePosition, initialPosition = createPosition(0, 0)) ->
-      sum = @track.addPiecesLengthsBetween initialPosition, piecePosition
+    createCarLane: -> new CarLane @track.normalizedPieceIndex
+
+    distance: (piecePosition, initialPosition = createPosition(0, 0), carLane = @createCarLane()) ->
+      if not (carLane instanceof CarLane)
+        carLane = @getCarLane carLane
+      sum = @track.addPiecesLengthsBetween initialPosition, piecePosition, carLane
       sum + piecePosition.inPieceDistance
 
     addCarPositions: (carPositions) ->
       for carPosition in carPositions
         @carLanes[carPosition.id.color].add(carPosition.piecePosition)
 
-    getCarLanes: (color) ->
+    getCarLane: (color) ->
       objects.clone @carLanes[color]
 
     class CarLane
@@ -47,22 +61,26 @@ module.exports = (objects) ->
 
       at: (position) ->
         index = @normalizedPieceIndex position
-        if @isNewLowestIndex index
-          return startLaneIndex: 0, endLaneIndex: 0
-        if @laneAtIndex[index]?
-          return @laneAtIndex[index]
-        for i in [index..@lowestIndex] by -1
-          if @laneAtIndex[i]?
-            endLane = @laneAtIndex[i].endLaneIndex
-            return startLaneIndex: endLane, endLaneIndex: endLane
+        @atIndex index
+
+      atIndex: (index) ->
+        if @isLowerThanLowestIndex index
+          startLaneIndex: 0, endLaneIndex: 0
+        else if @laneAtIndex[index]?
+          @laneAtIndex[index]
+        else
+          for i in [index..@lowestIndex] by -1
+            if @laneAtIndex[i]?
+              endLane = @laneAtIndex[i].endLaneIndex
+              return startLaneIndex: endLane, endLaneIndex: endLane
 
       add: (position) ->
         index = @normalizedPieceIndex position
-        if @isNewLowestIndex index
+        if @isLowerThanLowestIndex index
           @lowestIndex = index
         @laneAtIndex[index] = position.lane
 
-      isNewLowestIndex: (index) ->
+      isLowerThanLowestIndex: (index) ->
         not @lowestIndex? or index < @lowestIndex
 
   createPosition = (pieceIndex, inPieceDistance, lap = 0, startLaneIndex = 0, endLaneIndex = startLaneIndex) ->
