@@ -31,6 +31,8 @@ module.exports = (objects) ->
         @carLanes[carPosition.id.color].add carPosition.piecePosition
         @carPositions[carPosition.id.color].add tick, carPosition
 
+    getPiece: (color, offset = 0) -> @track.pieceAt(@normalizedPieceIndex(@getPiecePosition(color)) + offset)
+    getPieceAhead: (color) -> @getPiece(color, 1)
     getPiecePosition: (color, tick = @currentTick) -> @carPositions[color].getPiecePosition tick
     getCarAngle: (color, tick = @currentTick) -> @carPositions[color].getAngle(tick)
     getLane: (color, tick = @currentTick) -> @carLanes[color].at @getPiecePosition color, tick

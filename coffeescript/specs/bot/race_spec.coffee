@@ -153,11 +153,11 @@ describe 'The race', ->
       @redLane.add createPosition 29, 0.0, 0, 1, 0
       expect(@race.track.pieceLength 29, @redLane).to.approximate(81.0281, 0.01)
 
-    describe 'velocity and acceleration calculation', ->
+    describe 'basic information for the bot', ->
       @beforeEach ->
         @race.addCarPositions position, tick for position, tick in samplePositions
 
-      it 'can tell the current position for a color', ->
+      it 'provides the current position for a color', ->
         currentPositions = samplePositions[-1..][0]
         currentPositionRed = currentPositions[0]
         expect(@race.getPiecePosition 'red').to.eql currentPositionRed.piecePosition
@@ -168,6 +168,16 @@ describe 'The race', ->
         currentPiecePositionBlue = currentPositions[1].piecePosition
         initialPiecePositionBlue = samplePositions[0][1].piecePosition
         expect(@race.getCarDistance 'blue').to.approximate @race.distance(currentPiecePositionBlue, initialPiecePositionBlue)
+
+      it 'provides the current piece and piece ahead', ->
+        expect(@race.getPiece 'red').to.eql sampleRace.track.pieces[0]
+        expect(@race.getPieceAhead 'red').to.eql sampleRace.track.pieces[1]
+        expect(@race.getPiece 'blue').to.eql sampleRace.track.pieces[39]
+        expect(@race.getPieceAhead 'blue').to.eql sampleRace.track.pieces[0]
+
+    describe 'velocity and acceleration calculation', ->
+      @beforeEach ->
+        @race.addCarPositions position, tick for position, tick in samplePositions
 
       it 'calculates velocity for given tick and number of ticks', ->
         expect(@race.getVelocity 'red', 0).to.approximate 0.0
