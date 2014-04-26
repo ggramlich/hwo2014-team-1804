@@ -1,70 +1,11 @@
 module.exports = (objects) ->
   ##################################
-  # Lanes
-  ##################################
-  class Lanes
-    constructor: (lanes) ->
-      @distanceFromCenter = []
-      for lane in lanes
-        @distanceFromCenter[lane.index] = lane.distanceFromCenter
-
-    getDistances: ({startLaneIndex, endLaneIndex}) ->
-      startDistance = @distanceFromCenter[startLaneIndex]
-      endDistance = @distanceFromCenter[endLaneIndex]
-
-      startDistance: startDistance
-      endDistance: endDistance
-      totalDistance: Math.abs startDistance - endDistance
-      isSwitch: startLaneIndex isnt endLaneIndex
-
-
-  ##################################
-  # Track
-  ##################################
-  class Track
-    constructor: ({@id, @pieces, lanes}) ->
-      @lanes = new Lanes lanes
-
-    normalizedPieceIndex: ({pieceIndex, lap}) =>
-      lap * @pieces.length + pieceIndex
-
-    pieceAt: (normalizedIndex) ->
-      # positive modulus
-      index = ((normalizedIndex % @pieces.length) + @pieces.length) % @pieces.length
-      @pieces[index]
-
-    addPiecesLengthsBetween: (initialPosition, piecePosition, carLane) ->
-      indices = [(@normalizedPieceIndex initialPosition)...(@normalizedPieceIndex piecePosition)]
-      indices.reduce ((sum, index) => sum + @pieceLength index, carLane), -initialPosition.inPieceDistance
-
-    pieceLength: (index, carLane) ->
-      {startDistance, endDistance, totalDistance, isSwitch} = @lanes.getDistances carLane.atIndex index
-      piece = @pieceAt(index)
-      if (piece.length?)
-        if isSwitch
-          1.0008 * Math.sqrt totalDistance * totalDistance + piece.length * piece.length
-        else
-          piece.length
-      else
-        lengthOnStartLane = @bendedPieceLength piece, startDistance
-        return lengthOnStartLane unless isSwitch
-        lengthOnEndLane = @bendedPieceLength piece, endDistance
-        innerLength = Math.min(lengthOnEndLane, lengthOnStartLane)
-        outerLength = Math.max(lengthOnEndLane, lengthOnStartLane)
-        ratio = (outerLength / innerLength)
-        factor = 1.023 / Math.pow(ratio, 2.2)
-        innerLength + (outerLength - innerLength) * factor
-
-    bendedPieceLength: ({radius, angle}, distanceFromCenter) ->
-        bended = if angle < 0 then 1 else -1
-        laneRadius = radius + bended * distanceFromCenter
-        laneRadius * Math.PI * Math.abs(angle) / 180
-
-  ##################################
   # Race
   ##################################
   class Race
+    race = null
     constructor: ({track, @cars, @raceSession}) ->
+      race = this
       @currentTick = 0
       @track = new Track track
       @carLanes = []
@@ -73,12 +14,12 @@ module.exports = (objects) ->
       for car in @cars
         color = car.id.color
         @carColors.push color
-        @carLanes[color] = @createCarLane()
+        @carLanes[color] = new CarLane
         @carPositions[color] = new CarPositions
 
-    createCarLane: -> new CarLane @track.normalizedPieceIndex
+    normalizedPieceIndex: ({pieceIndex, lap}) => lap * @track.pieces.length + pieceIndex
 
-    distance: (piecePosition, initialPosition = createPosition(0, 0), carLane = @createCarLane()) ->
+    distance: (piecePosition, initialPosition = createPosition(0, 0), carLane = new CarLane) ->
       if not (carLane instanceof CarLane)
         carLane = @getCarLane carLane
       sum = @track.addPiecesLengthsBetween initialPosition, piecePosition, carLane
@@ -107,14 +48,72 @@ module.exports = (objects) ->
 
 
     ##################################
+    # Track
+    ##################################
+    class Track
+      mod = (n, m) -> ((n % m) + m) % m
+
+      constructor: ({@id, @pieces, lanes}) ->
+        @lanes = new Lanes lanes
+
+      normalizedPieceIndex: ({pieceIndex, lap}) => lap * @pieces.length + pieceIndex
+      pieceAt: (normalizedIndex) -> @pieces[mod normalizedIndex, @pieces.length]
+
+      addPiecesLengthsBetween: (initialPosition, piecePosition, carLane) ->
+        indices = [(@normalizedPieceIndex initialPosition)...(@normalizedPieceIndex piecePosition)]
+        indices.reduce ((sum, index) => sum + @pieceLength index, carLane), -initialPosition.inPieceDistance
+
+      pieceLength: (index, carLane) ->
+        {startDistance, endDistance, totalDistance, isSwitch} = @lanes.getDistances carLane.atIndex index
+        piece = @pieceAt(index)
+        if (piece.length?)
+          if isSwitch
+            1.0008 * Math.sqrt totalDistance * totalDistance + piece.length * piece.length
+          else
+            piece.length
+        else
+          lengthOnStartLane = @bendedPieceLength piece, startDistance
+          return lengthOnStartLane unless isSwitch
+          lengthOnEndLane = @bendedPieceLength piece, endDistance
+          innerLength = Math.min(lengthOnEndLane, lengthOnStartLane)
+          outerLength = Math.max(lengthOnEndLane, lengthOnStartLane)
+          ratio = (outerLength / innerLength)
+          factor = 1.023 / Math.pow(ratio, 2.2)
+          innerLength + (outerLength - innerLength) * factor
+
+      bendedPieceLength: ({radius, angle}, distanceFromCenter) ->
+        bended = if angle < 0 then 1 else -1
+        laneRadius = radius + bended * distanceFromCenter
+        laneRadius * Math.PI * Math.abs(angle) / 180
+
+    ##################################
+    # Lanes
+    ##################################
+    class Lanes
+      constructor: (lanes) ->
+        @distanceFromCenter = []
+        for lane in lanes
+          @distanceFromCenter[lane.index] = lane.distanceFromCenter
+
+      getDistances: ({startLaneIndex, endLaneIndex}) ->
+        startDistance = @distanceFromCenter[startLaneIndex]
+        endDistance = @distanceFromCenter[endLaneIndex]
+
+        startDistance: startDistance
+        endDistance: endDistance
+        totalDistance: Math.abs startDistance - endDistance
+        isSwitch: startLaneIndex isnt endLaneIndex
+
+
+    ##################################
     # CarLane
     ##################################
     class CarLane
-      constructor: (@normalizedPieceIndex) ->
+      constructor: () ->
         @laneAtIndex = []
         @lowestIndex = null
 
-      at: (position) -> @atIndex @normalizedPieceIndex position
+      at: (position) -> @atIndex race.normalizedPieceIndex position
       isLowerThanLowestIndex: (index) -> not @lowestIndex? or index < @lowestIndex
 
       atIndex: (index) ->
@@ -129,7 +128,7 @@ module.exports = (objects) ->
               return startLaneIndex: endLane, endLaneIndex: endLane
 
       add: (position) ->
-        index = @normalizedPieceIndex position
+        index = race.normalizedPieceIndex position
         if @isLowerThanLowestIndex index
           @lowestIndex = index
         @laneAtIndex[index] = position.lane
