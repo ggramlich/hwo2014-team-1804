@@ -1,6 +1,6 @@
 module.exports =
   initialConnection:
-    module: 'lib/initialConnection'
+    module: 'lib/initialConnection/initialConnection'
     autowire: on
   messages:
     module: 'lib/initialConnection/messages'
@@ -11,7 +11,7 @@ module.exports =
     module: 'lib/bot/race'
     autowire: on
   bot:
-    module: 'lib/bot'
+    module: 'lib/bot/bot'
     autowire: on
   async:
     module: 'async'
