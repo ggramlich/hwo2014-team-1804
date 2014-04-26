@@ -55,10 +55,16 @@ module.exports = (objects) ->
 
   class Race
     constructor: ({track, @cars, @raceSession}) ->
+      @currentTick = 0
       @track = new Track track
       @carLanes = []
+      @carPositions = []
+      @carColors = []
       for car in @cars
-        @carLanes[car.id.color] = @createCarLane()
+        color = car.id.color
+        @carColors.push color
+        @carLanes[color] = @createCarLane()
+        @carPositions[color] = new CarPositions
 
     createCarLane: -> new CarLane @track.normalizedPieceIndex
 
@@ -68,21 +74,30 @@ module.exports = (objects) ->
       sum = @track.addPiecesLengthsBetween initialPosition, piecePosition, carLane
       sum + piecePosition.inPieceDistance
 
-    addCarPositions: (carPositions) ->
+    addCarPositions: (carPositions, tick = -1) ->
+      @currentTick = tick
       for carPosition in carPositions
-        @carLanes[carPosition.id.color].add(carPosition.piecePosition)
+        @carLanes[carPosition.id.color].add carPosition.piecePosition
+        @carPositions[carPosition.id.color].add tick, carPosition
+
+    getPiecePosition: (color, tick) ->
+      @carPositions[color].getPiecePosition tick
 
     getCarLane: (color) ->
       objects.clone @carLanes[color]
+
+    getVelocity: (color, tick = @currentTick, numberOfTicks = 1) ->
+      if tick <= 0 then return 0
+      numberOfTicks = Math.min tick, numberOfTicks
+      @distance(@getPiecePosition(color, tick), @getPiecePosition(color, tick - numberOfTicks)) / numberOfTicks
 
     class CarLane
       constructor: (@normalizedPieceIndex) ->
         @laneAtIndex = []
         @lowestIndex = null
 
-      at: (position) ->
-        index = @normalizedPieceIndex position
-        @atIndex index
+      at: (position) -> @atIndex @normalizedPieceIndex position
+      isLowerThanLowestIndex: (index) -> not @lowestIndex? or index < @lowestIndex
 
       atIndex: (index) ->
         if @isLowerThanLowestIndex index
@@ -101,8 +116,10 @@ module.exports = (objects) ->
           @lowestIndex = index
         @laneAtIndex[index] = position.lane
 
-      isLowerThanLowestIndex: (index) ->
-        not @lowestIndex? or index < @lowestIndex
+    class CarPositions
+      constructor: -> @positions = []
+      add: (tick, position) -> @positions[tick] = position
+      getPiecePosition: (tick) -> @positions[tick].piecePosition
 
   createPosition = (pieceIndex, inPieceDistance, lap = 0, startLaneIndex = 0, endLaneIndex = startLaneIndex) ->
     lane = {startLaneIndex, endLaneIndex}

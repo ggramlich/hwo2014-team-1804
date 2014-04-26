@@ -153,4 +153,21 @@ describe 'The race', ->
       @redLane.add createPosition 29, 0.0, 0, 1, 0
       expect(@race.track.pieceLength 29, @redLane).to.approximate(81.0281, 0.01)
 
+    describe 'velocity and acceleration calculation', ->
+      @beforeEach ->
+        @race.addCarPositions position, tick for position, tick in samplePositions
 
+      it 'calculates velocity for given tick and number of ticks', ->
+        expect(@race.getVelocity 'red', 1).to.approximate 0.126
+        expect(@race.getVelocity 'red', 1, 5).to.approximate 0.126
+        expect(@race.getVelocity 'red', 5).to.approximate 1.84035 - 1.235051
+        expect(@race.getVelocity 'red', 5, 2).to.approximate (1.84035 - 0.7459704) / 2
+        expect(@race.getVelocity 'red', 5, 5).to.approximate 1.84035 / 5
+        expect(@race.getVelocity 'red', 5, 10).to.approximate 1.84035 / 5
+        expect(@race.getVelocity 'blue', 1).to.approximate 0.04
+        expect(@race.getVelocity 'blue', 1, 5).to.approximate 0.04
+
+      it 'calculates velocity for last tick', ->
+        lastTick = samplePositions.length - 1
+        expect(@race.getVelocity 'red').to.equal @race.getVelocity 'red', lastTick
+        expect(@race.getVelocity 'blue').to.equal @race.getVelocity 'blue', lastTick
