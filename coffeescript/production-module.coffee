@@ -12,6 +12,7 @@ module.exports =
     autowire: on
   bot:
     module: 'lib/bot'
+    autowire: on
   async:
     module: 'async'
   net:

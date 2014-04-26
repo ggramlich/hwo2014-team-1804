@@ -3,6 +3,10 @@ container = new CoolBeans require './production-module'
 
 [serverHost, serverPort, name, key] = process.argv[2..]
 
+winston = container.get 'winston'
+# winston.level = 'debug' # most
+# winston.level = 'verbose' # a little more than info
+
 # keimola, germany, usa
 if process.env.TESTRACE?
   testRace =
@@ -10,7 +14,7 @@ if process.env.TESTRACE?
     carCount: 4
     joinOnly: off
 
-console.log "I'm #{name} and connect to #{serverHost}:#{serverPort}"
+winston.info "I'm #{name} and connect to #{serverHost}:#{serverPort}"
 
 botData = {name, key}
 

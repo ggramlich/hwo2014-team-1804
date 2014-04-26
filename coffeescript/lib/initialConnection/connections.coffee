@@ -1,4 +1,4 @@
-module.exports = (net, JSONStream) ->
+module.exports = (net, JSONStream, winston) ->
   for: (serverPort, serverHost) ->
     create: (message, callback) ->
       client = net.connect serverPort, serverHost, () ->
@@ -7,7 +7,7 @@ module.exports = (net, JSONStream) ->
 
       send = (json) ->
         jsonString = JSON.stringify(json)
-        console.log 'SENDING: ' + jsonString
+        winston.debug 'SENDING: ' + jsonString
         client.write jsonString
         client.write '\n'
 
