@@ -5,6 +5,15 @@ module.exports = (objects) ->
       for lane in lanes
         @distanceFromCenter[lane.index] = lane.distanceFromCenter
 
+    getDistances: ({startLaneIndex, endLaneIndex}) ->
+      startDistance = @distanceFromCenter[startLaneIndex]
+      endDistance = @distanceFromCenter[endLaneIndex]
+
+      startDistance: startDistance
+      endDistance: endDistance
+      totalDistance: Math.abs startDistance - endDistance
+      isSwitch: startLaneIndex isnt endLaneIndex
+
   class Track
     constructor: ({@id, @pieces, lanes}) ->
       @lanes = new Lanes lanes
@@ -22,14 +31,17 @@ module.exports = (objects) ->
       indices.reduce ((sum, index) => sum + @pieceLength index, carLane), -initialPosition.inPieceDistance
 
     pieceLength: (index, carLane) ->
+      {startDistance, endDistance, totalDistance, isSwitch} = @lanes.getDistances carLane.atIndex index
       piece = @pieceAt(index)
       if (piece.length?)
-        piece.length
+        if isSwitch
+          1.0008 * Math.sqrt totalDistance * totalDistance + piece.length * piece.length
+        else
+          piece.length
       else
         {radius, angle} = piece
         bended = if angle < 0 then 1 else -1
-        {startLaneIndex, endLaneIndex} = carLane.atIndex index
-        laneRadius = radius + bended * @lanes.distanceFromCenter[endLaneIndex]
+        laneRadius = radius + bended * endDistance
         laneRadius * Math.PI * Math.abs(angle) / 180
 
   class Race

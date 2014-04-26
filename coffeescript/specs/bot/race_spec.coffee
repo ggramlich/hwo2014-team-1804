@@ -122,3 +122,16 @@ describe 'The race', ->
       expect(@race.distance piecePosition, initialPosition, 'red').to.approximate(86.3937)
       expect(@race.distance piecePosition, initialPosition, 'blue').to.approximate(70.6858)
 
+    it 'calculates distance for switches on straight pieces given the lanes', ->
+      piecePosition = createPosition 4, 0.0
+      initialPosition = createPosition 3, 0.0
+
+      # from 0 to 1
+      @redLane.add createPosition 3, 0.0, 0, 0, 1
+      expect(@race.distance piecePosition, initialPosition, @redLane).to.approximate(102.060, 0.002)
+
+      # from 1 to 0
+      @redLane.add createPosition 3, 0.0, 0, 1, 0
+      expect(@race.distance piecePosition, initialPosition, @redLane).to.approximate(102.060, 0.002)
+
+
