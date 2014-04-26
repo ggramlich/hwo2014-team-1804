@@ -2,6 +2,8 @@ CoolBeans = require 'CoolBeans'
 container = new CoolBeans require '../../production-module'
 
 race = container.get 'race'
+objects = container.get 'objects'
+
 expect = require 'must'
 # Do not output stack trace for failed assertions
 Error.captureStackTrace = null
@@ -168,12 +170,32 @@ describe 'The race', ->
         currentPiecePositionBlue = currentPositions[1].piecePosition
         initialPiecePositionBlue = samplePositions[0][1].piecePosition
         expect(@race.getCarDistance 'blue').to.approximate @race.distance(currentPiecePositionBlue, initialPiecePositionBlue)
+        expect(@race.getLane 'blue').to.eql currentPiecePositionBlue.lane
 
       it 'provides the current piece and piece ahead', ->
         expect(@race.getPiece 'red').to.eql sampleRace.track.pieces[0]
         expect(@race.getPieceAhead 'red').to.eql sampleRace.track.pieces[1]
         expect(@race.getPiece 'blue').to.eql sampleRace.track.pieces[39]
         expect(@race.getPieceAhead 'blue').to.eql sampleRace.track.pieces[0]
+
+      it 'provides the correct distance for a car on lane 1', ->
+        createCarPositions = (pieceIndex, inPieceDistance, lap, startLaneIndex, endLaneIndex) ->
+          carPositions = objects.clone samplePositions[0]
+          carPositions[1].piecePosition = createPosition(pieceIndex, inPieceDistance, lap, startLaneIndex, endLaneIndex)
+          carPositions
+
+        # piece 4 has length 70.6858 on lane 1
+        @race.addCarPositions createCarPositions(4, 62.6858, 0, 1, 1), 498
+        @race.addCarPositions createCarPositions(4, 65.6858, 0, 1, 1), 499
+        @race.addCarPositions createCarPositions(5, 0.0, 0, 1, 1), 500
+        currentPiecePositionBlue = createPosition(5, 0.0, 0, 1, 1)
+        initialPiecePositionBlue = samplePositions[0][1].piecePosition
+        expect(@race.getCarDistance 'blue').to.approximate @race.distance(currentPiecePositionBlue, initialPiecePositionBlue)
+        expect(@race.getVelocity 'blue', 499).to.approximate 3.0
+        expect(@race.getVelocity 'blue').to.approximate 5.0
+        expect(@race.getVelocity 'blue', 500, 2).to.approximate 4.0
+        expect(@race.getAcceleration 'blue').to.approximate 2.0
+
 
     describe 'velocity and acceleration calculation', ->
       @beforeEach ->

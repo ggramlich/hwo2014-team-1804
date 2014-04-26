@@ -43,7 +43,7 @@ module.exports = (objects) ->
     getVelocity: (color, tick = @currentTick, numberOfTicks = 1) ->
       if tick <= 0 or numberOfTicks <= 0 then return 0
       numberOfTicks = Math.min tick, numberOfTicks
-      @distance(@getPiecePosition(color, tick), @getPiecePosition(color, tick - numberOfTicks)) / numberOfTicks
+      @distance(@getPiecePosition(color, tick), @getPiecePosition(color, tick - numberOfTicks), @getCarLane color) / numberOfTicks
 
     getAcceleration: (color, tick = @currentTick, numberOfTicks = 1) ->
       @getVelocity(color, tick, numberOfTicks) - @getVelocity(color, tick - 1, numberOfTicks)
@@ -143,6 +143,7 @@ module.exports = (objects) ->
       constructor: -> @positions = []
       add: (tick, position) -> @positions[tick] = position
       getPiecePosition: (tick) -> @positions[tick].piecePosition
+
       getAngle: (tick) -> @positions[tick].angle
 
 
