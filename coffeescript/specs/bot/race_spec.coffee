@@ -170,6 +170,9 @@ describe 'The race', ->
         expect(@race.getCarDistance 'blue').to.approximate @race.distance(currentPiecePositionBlue, initialPiecePositionBlue)
 
       it 'calculates velocity for given tick and number of ticks', ->
+        expect(@race.getVelocity 'red', 0).to.approximate 0.0
+        expect(@race.getVelocity 'red', 0, 0).to.approximate 0.0
+        expect(@race.getVelocity 'red', 1, 0).to.approximate 0.0
         expect(@race.getVelocity 'red', 1).to.approximate 0.126
         expect(@race.getVelocity 'red', 1, 5).to.approximate 0.126
         expect(@race.getVelocity 'red', 5).to.approximate 1.84035 - 1.235051
@@ -178,8 +181,26 @@ describe 'The race', ->
         expect(@race.getVelocity 'red', 5, 10).to.approximate 1.84035 / 5
         expect(@race.getVelocity 'blue', 1).to.approximate 0.04
         expect(@race.getVelocity 'blue', 1, 5).to.approximate 0.04
+        expect(@race.getVelocity 'blue', 5, 2).to.approximate 0.17371
 
       it 'calculates velocity for last tick', ->
         lastTick = samplePositions.length - 1
         expect(@race.getVelocity 'red').to.equal @race.getVelocity 'red', lastTick
         expect(@race.getVelocity 'blue').to.equal @race.getVelocity 'blue', lastTick
+
+      it 'calculates acceleration for given tick and number of ticks', ->
+        expect(@race.getAcceleration 'red', 0).to.approximate 0.0
+        expect(@race.getAcceleration 'red', 1).to.approximate 0.126
+        expect(@race.getAcceleration 'red', 1, 5).to.approximate 0.126
+        expect(@race.getAcceleration 'red', 5).to.approximate (@race.getVelocity('red', 5) - @race.getVelocity('red', 4))
+        expect(@race.getAcceleration 'red', 5, 2).to.approximate (@race.getVelocity('red', 5, 2) - @race.getVelocity('red', 4, 2))
+        expect(@race.getAcceleration 'red', 5, 5).to.approximate (@race.getVelocity('red', 5, 5) - @race.getVelocity('red', 4, 5))
+        expect(@race.getAcceleration 'red', 5, 10).to.approximate (@race.getVelocity('red', 5, 10) - @race.getVelocity('red', 4, 10))
+
+        expect(@race.getAcceleration 'blue', 1).to.approximate 0.04
+        expect(@race.getAcceleration 'blue', 5, 2).to.approximate (@race.getVelocity('blue', 5, 2) - @race.getVelocity('blue', 4, 2))
+
+      it 'calculates acceleration for last tick', ->
+        lastTick = samplePositions.length - 1
+        expect(@race.getAcceleration 'red').to.equal @race.getAcceleration 'red', lastTick
+        expect(@race.getAcceleration 'blue').to.equal @race.getAcceleration 'blue', lastTick

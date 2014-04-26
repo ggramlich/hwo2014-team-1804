@@ -98,9 +98,12 @@ module.exports = (objects) ->
     getCarLane: (color) -> objects.clone @carLanes[color]
 
     getVelocity: (color, tick = @currentTick, numberOfTicks = 1) ->
-      if tick <= 0 then return 0
+      if tick <= 0 or numberOfTicks <= 0 then return 0
       numberOfTicks = Math.min tick, numberOfTicks
       @distance(@getPiecePosition(color, tick), @getPiecePosition(color, tick - numberOfTicks)) / numberOfTicks
+
+    getAcceleration: (color, tick = @currentTick, numberOfTicks = 1) ->
+      @getVelocity(color, tick, numberOfTicks) - @getVelocity(color, tick - 1, numberOfTicks)
 
 
     ##################################
