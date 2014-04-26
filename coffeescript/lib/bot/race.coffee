@@ -39,9 +39,18 @@ module.exports = (objects) ->
         else
           piece.length
       else
-        {radius, angle} = piece
+        lengthOnStartLane = @bendedPieceLength piece, startDistance
+        return lengthOnStartLane unless isSwitch
+        lengthOnEndLane = @bendedPieceLength piece, endDistance
+        innerLength = Math.min(lengthOnEndLane, lengthOnStartLane)
+        outerLength = Math.max(lengthOnEndLane, lengthOnStartLane)
+        ratio = (outerLength / innerLength)
+        factor = 1.023 / Math.pow(ratio, 2.2)
+        innerLength + (outerLength - innerLength) * factor
+
+    bendedPieceLength: ({radius, angle}, distanceFromCenter) ->
         bended = if angle < 0 then 1 else -1
-        laneRadius = radius + bended * endDistance
+        laneRadius = radius + bended * distanceFromCenter
         laneRadius * Math.PI * Math.abs(angle) / 180
 
   class Race
