@@ -20,3 +20,5 @@ module.exports =
     module: 'JSONStream'
   objects:
     module: 'objects'
+  winston:
+    module: 'winston'

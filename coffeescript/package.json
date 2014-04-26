@@ -11,7 +11,8 @@
     "JSONStream": "0.6.4",
     "async": "~0.7.0",
     "CoolBeans": "0.0.9",
-    "objects": "~0.3.0"
+    "objects": "~0.3.0",
+    "winston": "~0.7.3"
   },
   "devDependencies": {
     "mocha": "~1.18.2",
