@@ -10,6 +10,9 @@ module.exports =
   race:
     module: 'lib/bot/race'
     autowire: on
+  physics:
+    module: 'lib/bot/physics'
+    autowire: on
   bot:
     module: 'lib/bot/bot'
     autowire: on
