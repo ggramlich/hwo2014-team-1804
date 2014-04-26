@@ -157,6 +157,18 @@ describe 'The race', ->
       @beforeEach ->
         @race.addCarPositions position, tick for position, tick in samplePositions
 
+      it 'can tell the current position for a color', ->
+        currentPositions = samplePositions[-1..][0]
+        currentPositionRed = currentPositions[0]
+        expect(@race.getPiecePosition 'red').to.eql currentPositionRed.piecePosition
+        expect(@race.getLane 'red').to.eql currentPositionRed.piecePosition.lane
+        expect(@race.getCarAngle 'red').to.equal currentPositionRed.angle
+        expect(@race.getCarDistance 'red').to.approximate @race.distance currentPositionRed.piecePosition
+
+        currentPiecePositionBlue = currentPositions[1].piecePosition
+        initialPiecePositionBlue = samplePositions[0][1].piecePosition
+        expect(@race.getCarDistance 'blue').to.approximate @race.distance(currentPiecePositionBlue, initialPiecePositionBlue)
+
       it 'calculates velocity for given tick and number of ticks', ->
         expect(@race.getVelocity 'red', 1).to.approximate 0.126
         expect(@race.getVelocity 'red', 1, 5).to.approximate 0.126

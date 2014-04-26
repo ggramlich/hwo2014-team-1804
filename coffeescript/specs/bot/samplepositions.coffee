@@ -205,7 +205,7 @@ module.exports =
         name: "ggramlich"
         color: "red"
 
-      angle: 0
+      angle: 0.1
       piecePosition:
         pieceIndex: 0
         inPieceDistance: 2.559543

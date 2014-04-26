@@ -1,4 +1,7 @@
 module.exports = (objects) ->
+  ##################################
+  # Lanes
+  ##################################
   class Lanes
     constructor: (lanes) ->
       @distanceFromCenter = []
@@ -14,6 +17,10 @@ module.exports = (objects) ->
       totalDistance: Math.abs startDistance - endDistance
       isSwitch: startLaneIndex isnt endLaneIndex
 
+
+  ##################################
+  # Track
+  ##################################
   class Track
     constructor: ({@id, @pieces, lanes}) ->
       @lanes = new Lanes lanes
@@ -53,6 +60,9 @@ module.exports = (objects) ->
         laneRadius = radius + bended * distanceFromCenter
         laneRadius * Math.PI * Math.abs(angle) / 180
 
+  ##################################
+  # Race
+  ##################################
   class Race
     constructor: ({track, @cars, @raceSession}) ->
       @currentTick = 0
@@ -80,17 +90,22 @@ module.exports = (objects) ->
         @carLanes[carPosition.id.color].add carPosition.piecePosition
         @carPositions[carPosition.id.color].add tick, carPosition
 
-    getPiecePosition: (color, tick) ->
-      @carPositions[color].getPiecePosition tick
+    getPiecePosition: (color, tick = @currentTick) -> @carPositions[color].getPiecePosition tick
+    getCarAngle: (color, tick = @currentTick) -> @carPositions[color].getAngle(tick)
+    getLane: (color, tick = @currentTick) -> @carLanes[color].at @getPiecePosition color, tick
+    getCarDistance: (color, tick = @currentTick) -> @distance @getPiecePosition(color, tick), @getPiecePosition(color, 0)
 
-    getCarLane: (color) ->
-      objects.clone @carLanes[color]
+    getCarLane: (color) -> objects.clone @carLanes[color]
 
     getVelocity: (color, tick = @currentTick, numberOfTicks = 1) ->
       if tick <= 0 then return 0
       numberOfTicks = Math.min tick, numberOfTicks
       @distance(@getPiecePosition(color, tick), @getPiecePosition(color, tick - numberOfTicks)) / numberOfTicks
 
+
+    ##################################
+    # CarLane
+    ##################################
     class CarLane
       constructor: (@normalizedPieceIndex) ->
         @laneAtIndex = []
@@ -116,10 +131,21 @@ module.exports = (objects) ->
           @lowestIndex = index
         @laneAtIndex[index] = position.lane
 
+
+    ##################################
+    # CarPositions
+    ##################################
     class CarPositions
       constructor: -> @positions = []
       add: (tick, position) -> @positions[tick] = position
       getPiecePosition: (tick) -> @positions[tick].piecePosition
+      getAngle: (tick) -> @positions[tick].angle
+
+
+
+  ##################################
+  # To be exported
+  ##################################
 
   createPosition = (pieceIndex, inPieceDistance, lap = 0, startLaneIndex = 0, endLaneIndex = startLaneIndex) ->
     lane = {startLaneIndex, endLaneIndex}
