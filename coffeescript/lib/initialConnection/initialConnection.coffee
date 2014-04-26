@@ -39,6 +39,10 @@ module.exports = (messages, async, connections, race, winston) ->
             bot = new Bot carData, currentRace
           else if msgType is 'carPositions'
             currentRace?.addCarPositions data.data, data.gameTick ? 0
+          else if msgType is 'crash'
+            winston.verbose dataString
+            currentRace?.addCrash data.data, data.gameTick ? 0
+            winston.verbose "Max Angle is now #{currentRace.maxAngle}"
           else if msgType in ['lapFinished', 'gameStart', 'joinRace', 'finish', 'turboAvailable', 'createRace']
             winston.verbose dataString
           else

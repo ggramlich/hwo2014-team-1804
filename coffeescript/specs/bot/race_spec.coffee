@@ -236,3 +236,17 @@ describe 'The race', ->
         lastTick = samplePositions.length - 1
         expect(@race.getAcceleration 'red').to.equal @race.getAcceleration 'red', lastTick
         expect(@race.getAcceleration 'blue').to.equal @race.getAcceleration 'blue', lastTick
+
+    describe 'max angle', ->
+      it 'is 60 by default', ->
+        expect(@race.maxAngle).to.equal 60.0
+
+      it 'is set to the last angle before a crash', ->
+        positions = samplePositions[0]
+        positions[0].angle = 40.0
+        positions[1].angle = 45.0
+        @race.addCarPositions positions, 20
+        @race.addCrash color: 'blue', 21
+
+        expect(@race.maxAngle).to.equal 45.0
+

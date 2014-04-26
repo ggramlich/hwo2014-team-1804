@@ -11,6 +11,7 @@ module.exports = (objects) ->
       @carLanes = []
       @carPositions = []
       @carColors = []
+      @maxAngle = 60.0
       for car in @cars
         color = car.id.color
         @carColors.push color
@@ -48,6 +49,11 @@ module.exports = (objects) ->
     getAcceleration: (color, tick = @currentTick, numberOfTicks = 1) ->
       @getVelocity(color, tick, numberOfTicks) - @getVelocity(color, tick - 1, numberOfTicks)
 
+    addCrash: ({color}, tick = @currentTick) ->
+      # try to be on the safe side, actually we might want to increase the maxAngle seen so far
+      lastAngle = @getCarAngle color, tick - 1
+      if lastAngle < @maxAngle
+        @maxAngle = lastAngle
 
     ##################################
     # Track
