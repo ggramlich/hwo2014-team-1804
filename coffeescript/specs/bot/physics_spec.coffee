@@ -77,6 +77,20 @@ describe 'The physics', ->
     expect(throttle).to.equal 0.5
     expect(distance).to.approximate 1 + acceleration
 
+  it 'predicts next velocity and acceleration from throttle and default ratios for multiple ticks', ->
+    current =
+      throttle: 0.5
+      velocity: 1
+
+    next = @myPhysics.predictVelocityAndAcceleration current
+    second = @myPhysics.predictVelocityAndAcceleration next
+
+    {acceleration, velocity, distance, throttle} = @myPhysics.predictVelocityAndAcceleration current, 0.5, 2
+    expect(acceleration).to.approximate second.acceleration
+    expect(velocity).to.approximate 1 + next.acceleration + second.acceleration
+    expect(throttle).to.equal 0.5
+    expect(distance).to.approximate next.velocity + second.velocity
+
   it 'can advice the optimal throttle for target velocity', ->
     currentVelocity = 2
 

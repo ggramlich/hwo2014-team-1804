@@ -9,13 +9,13 @@ module.exports = (objects) ->
     initThrottleAndAccelerationRatio: (dataPoint1, dataPoint2) ->
       @throttleAndAccelerationRatio = getThrottleAndAccelerationRatio dataPoint1, dataPoint2
 
-    predictVelocityAndAcceleration: (originalCurrent, throttle) ->
+    predictVelocityAndAcceleration: (originalCurrent, throttle, ticks = 1) ->
       current = objects.clone originalCurrent
       if throttle?
         current.throttle = throttle
-      predictVelocityAndAcceleration @throttleAndAccelerationRatio, current
+      predictVelocityAndAcceleration @throttleAndAccelerationRatio, current, ticks
 
-    predictVelocity: (velocity, throttle) -> @predictVelocityAndAcceleration({velocity}, throttle).velocity
+    predictVelocity: (velocity, throttle, ticks = 1) -> @predictVelocityAndAcceleration({velocity}, throttle, ticks).velocity
 
     optimalThrottle: (targetVelocity, currentVelocity) ->
       {throttleFactor, accelerationRatio} = @throttleAndAccelerationRatio
@@ -45,15 +45,19 @@ module.exports = (objects) ->
 
     {throttleFactor, accelerationRatio}
 
-  predictVelocityAndAcceleration = (ratios, current) ->
+  predictVelocityAndAcceleration = (ratios, current, ticks = 1) ->
     {throttleFactor, accelerationRatio} = ratios
     {velocity, throttle} = current
 
     acceleration = (throttle * throttleFactor - velocity) / (accelerationRatio + 1)
     velocity = velocity + acceleration
-    distance = velocity
+    distance = velocity + (current.distance ? 0)
+    next = {acceleration, velocity, distance, throttle}
+    if ticks > 1
+      predictVelocityAndAcceleration ratios, next, ticks - 1
+    else
+      next
 
-    {acceleration, velocity, distance, throttle}
 
   create = -> new Physics()
 
