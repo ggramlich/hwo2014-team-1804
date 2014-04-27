@@ -64,11 +64,10 @@ module.exports = (objects) ->
       constructor: ({@id, @pieces, lanes}) ->
         @lanes = new Lanes lanes
 
-      normalizedPieceIndex: ({pieceIndex, lap}) => lap * @pieces.length + pieceIndex
       pieceAt: (normalizedIndex) -> @pieces[mod normalizedIndex, @pieces.length]
 
       addPiecesLengthsBetween: (initialPosition, piecePosition, carLane) ->
-        indices = [(@normalizedPieceIndex initialPosition)...(@normalizedPieceIndex piecePosition)]
+        indices = [(race.normalizedPieceIndex initialPosition)...(race.normalizedPieceIndex piecePosition)]
         indices.reduce ((sum, index) => sum + @pieceLength index, carLane), -initialPosition.inPieceDistance
 
       pieceLength: (index, carLane) ->
