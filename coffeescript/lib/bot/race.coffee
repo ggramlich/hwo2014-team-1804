@@ -1,4 +1,6 @@
 module.exports = (objects) ->
+  mod = (n, m) -> ((n % m) + m) % m
+
   ##################################
   # Race
   ##################################
@@ -19,6 +21,7 @@ module.exports = (objects) ->
         @carPositions[color] = new CarPositions
 
     normalizedPieceIndex: ({pieceIndex, lap}) => lap * @track.pieces.length + pieceIndex
+    createPositionForNormalizedIndex: (normalizedIndex) -> createPosition(mod(normalizedIndex, @track.pieces.length), 0, Math.floor(normalizedIndex / @track.pieces.length))
 
     distance: (piecePosition, initialPosition = createPosition(0, 0), carLane = new CarLane) ->
       if not (carLane instanceof CarLane)
@@ -32,13 +35,19 @@ module.exports = (objects) ->
         @carLanes[carPosition.id.color].add carPosition.piecePosition
         @carPositions[carPosition.id.color].add tick, carPosition
 
-    getNormalizedPieceIndex: (color) -> @normalizedPieceIndex(@getPiecePosition(color))
+    getNormalizedPieceIndex: (color, tick = @currentTick) -> @normalizedPieceIndex(@getPiecePosition(color, tick))
     getPiece: (color, offset = 0) -> @track.pieceAt(@getNormalizedPieceIndex(color) + offset)
     getPieceAhead: (color) -> @getPiece(color, 1)
     getPiecePosition: (color, tick = @currentTick) -> @carPositions[color].getPiecePosition tick
-    getCarAngle: (color, tick = @currentTick) -> @carPositions[color].getAngle(tick)
     getLane: (color, tick = @currentTick) -> @carLanes[color].at @getPiecePosition color, tick
-    getCarDistance: (color, tick = @currentTick) -> @distance @getPiecePosition(color, tick), @getPiecePosition(color, 0)
+    getCarDistance: (color, tick = @currentTick) -> @distance @getPiecePosition(color, tick), @getPiecePosition(color, 0), @getCarLane(color)
+    straightDistanceAhead: (color, tick = @currentTick) -> Math.max(0, @distance(@nextBendedPiecePosition(color, tick), @getPiecePosition(color, tick)))
+    nextBendedPiecePosition: (color, tick = @currentTick) -> @createPositionForNormalizedIndex(@nextBendedPieceIndex(color, tick))
+    nextBendedPieceIndex: (color, tick = @currentTick) -> @track.nextBendedPieceIndex @getNormalizedPieceIndex(color, tick)
+
+    getCarAngle: (color, tick = @currentTick) -> @carPositions[color].getAngle(tick)
+    getAngularSpeed: (color, tick = @currentTick) -> @getCarAngle(color, tick) - @getCarAngle(color, tick - 1)
+    getAngularSpeedChange: (color, tick = @currentTick) -> @getAngularSpeed(color, tick) - @getAngularSpeed(color, tick - 1)
 
     getCarLane: (color) -> objects.clone @carLanes[color]
 
@@ -60,8 +69,6 @@ module.exports = (objects) ->
     # Track
     ##################################
     class Track
-      mod = (n, m) -> ((n % m) + m) % m
-
       constructor: ({@id, @pieces, lanes}) ->
         @lanes = new Lanes lanes
 
@@ -93,6 +100,13 @@ module.exports = (objects) ->
         bended = if angle < 0 then 1 else -1
         laneRadius = radius + bended * distanceFromCenter
         laneRadius * Math.PI * Math.abs(angle) / 180
+
+      nextBendedPieceIndex: (index) ->
+        loop
+          piece = @pieceAt(index)
+          break unless (piece.length?)
+          index++
+        index
 
     ##################################
     # Lanes
@@ -148,9 +162,9 @@ module.exports = (objects) ->
     class CarPositions
       constructor: -> @positions = []
       add: (tick, position) -> @positions[tick] = position
-      getPiecePosition: (tick) -> @positions[tick].piecePosition
+      getPiecePosition: (tick) -> @positions[tick]?.piecePosition
 
-      getAngle: (tick) -> @positions[tick].angle
+      getAngle: (tick) -> @positions[tick]?.angle ? 0
 
 
 

@@ -156,6 +156,11 @@ describe 'The race', ->
       expect(@race.track.pieceLength 29, @redLane).to.approximate(81.0281, 0.01)
 
     describe 'basic information for the bot', ->
+      createBlueCarPositions = (pieceIndex, inPieceDistance, lap, startLaneIndex, endLaneIndex) ->
+        carPositions = objects.clone samplePositions[0]
+        carPositions[1].piecePosition = createPosition(pieceIndex, inPieceDistance, lap, startLaneIndex, endLaneIndex)
+        carPositions
+
       @beforeEach ->
         @race.addCarPositions position, tick for position, tick in samplePositions
 
@@ -181,22 +186,35 @@ describe 'The race', ->
         expect(@race.getPieceAhead 'blue').to.eql sampleRace.track.pieces[0]
 
       it 'provides the correct distance for a car on lane 1', ->
-        createCarPositions = (pieceIndex, inPieceDistance, lap, startLaneIndex, endLaneIndex) ->
-          carPositions = objects.clone samplePositions[0]
-          carPositions[1].piecePosition = createPosition(pieceIndex, inPieceDistance, lap, startLaneIndex, endLaneIndex)
-          carPositions
-
         # piece 4 has length 70.6858 on lane 1
-        @race.addCarPositions createCarPositions(4, 62.6858, 0, 1, 1), 498
-        @race.addCarPositions createCarPositions(4, 65.6858, 0, 1, 1), 499
-        @race.addCarPositions createCarPositions(5, 0.0, 0, 1, 1), 500
+        @race.addCarPositions createBlueCarPositions(4, 62.6858, 0, 1, 1), 498
+        @race.addCarPositions createBlueCarPositions(4, 65.6858, 0, 1, 1), 499
+        @race.addCarPositions createBlueCarPositions(5, 0.0, 0, 1, 1), 500
         currentPiecePositionBlue = createPosition(5, 0.0, 0, 1, 1)
         initialPiecePositionBlue = samplePositions[0][1].piecePosition
-        expect(@race.getCarDistance 'blue').to.approximate @race.distance(currentPiecePositionBlue, initialPiecePositionBlue)
+        expect(@race.getCarDistance 'blue').to.approximate @race.distance(currentPiecePositionBlue, initialPiecePositionBlue, @race.getCarLane('blue'))
         expect(@race.getVelocity 'blue', 499).to.approximate 3.0
         expect(@race.getVelocity 'blue').to.approximate 5.0
         expect(@race.getVelocity 'blue', 500, 2).to.approximate 4.0
         expect(@race.getAcceleration 'blue').to.approximate 2.0
+
+
+      it 'provides the straight distance ahead', ->
+        currentPositions = samplePositions[-1..][0]
+        currentPositionRed = currentPositions[0].piecePosition
+
+        expect(@race.nextBendedPieceIndex 'red').to.equal 4
+        expect(@race.straightDistanceAhead 'red').to.approximate @race.distance(createPosition(4, 0), currentPositionRed)
+
+        # Inside a bended piece
+        @race.addCarPositions createBlueCarPositions(4, 10.0, 0, 1, 1), 40
+        expect(@race.nextBendedPieceIndex 'blue').to.equal 4
+        expect(@race.straightDistanceAhead 'blue').to.equal 0
+
+        # Test for end of lane
+        @race.addCarPositions createBlueCarPositions(35, 0.0, 0, 1, 1), 500
+        expect(@race.nextBendedPieceIndex 'blue').to.equal 44
+        expect(@race.straightDistanceAhead 'blue').to.equal 890
 
 
     describe 'velocity and acceleration calculation', ->
