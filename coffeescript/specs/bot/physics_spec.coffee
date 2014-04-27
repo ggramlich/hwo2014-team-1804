@@ -41,3 +41,29 @@ describe 'The physics', ->
     expect(velocity).to.approximate 1 + acceleration
     expect(throttle).to.equal 0.5
     expect(distance).to.approximate 1
+
+  it 'can create and instance with reasonable defaults and adjustments', ->
+    # max velocity = 9 * 0.8 = 7.2
+    dataPoint1 =
+      throttle: 0.8
+      velocity: 1.8
+      acceleration: (7.2 - 1.8) / 51
+
+    dataPoint2 =
+      throttle: 0.8
+      velocity: 4.0
+      acceleration: (7.2 - 4.0) / 51
+
+    myPhysics = physics.create()
+
+    {throttleFactor, accelerationRatio} = myPhysics.throttleAndAccelerationRatio
+    expect(throttleFactor).to.approximate 10.0
+    expect(accelerationRatio).to.approximate 49.0
+
+    myPhysics.initThrottleAndAccelerationRatio dataPoint1, dataPoint2
+
+    {throttleFactor, accelerationRatio} = myPhysics.throttleAndAccelerationRatio
+    expect(throttleFactor).to.approximate 9.0
+    expect(accelerationRatio).to.approximate 51.0
+
+

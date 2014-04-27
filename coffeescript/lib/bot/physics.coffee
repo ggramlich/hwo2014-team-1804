@@ -1,5 +1,15 @@
 module.exports = ->
-  getThrottleAndAccelerationRatio: (dataPoint1, dataPoint2) ->
+
+  class Physics
+    constructor: ->
+      @throttleAndAccelerationRatio =
+        throttleFactor: 10.0
+        accelerationRatio: 49.0
+
+    initThrottleAndAccelerationRatio: (dataPoint1, dataPoint2) ->
+      @throttleAndAccelerationRatio = getThrottleAndAccelerationRatio dataPoint1, dataPoint2
+
+  getThrottleAndAccelerationRatio = (dataPoint1, dataPoint2) ->
     {throttle1, velocity1, acceleration1} = dataPoint1
     {throttle2, velocity2, acceleration2} = dataPoint2
 
@@ -17,7 +27,7 @@ module.exports = ->
 
     {throttleFactor, accelerationRatio}
 
-  predictVelocityAndAcceleration: (ratios, current) ->
+  predictVelocityAndAcceleration = (ratios, current) ->
     {throttleFactor, accelerationRatio} = ratios
     currentAcceleration = current.acceleration
     currentVelocity = current.velocity
@@ -29,3 +39,7 @@ module.exports = ->
     velocity = currentVelocity + acceleration
 
     {acceleration, velocity, distance, throttle}
+
+  create = -> new Physics()
+
+  return {getThrottleAndAccelerationRatio, predictVelocityAndAcceleration, create}
