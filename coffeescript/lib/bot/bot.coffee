@@ -1,12 +1,10 @@
 module.exports = (winston, physics) ->
-  TOLERANCE = 0.0001
-
   class Bot
     logOnEveryNthTick = 1
     headerLogged = no
     logHeader = ->
       unless headerLogged
-        winston.info ";gameTick;color;lap;pieceIndex;normalizedIndex;inPieceDistance;throttle;velocity;acceleration;angle;radius;predictVelocity;predictAcceleration"
+        winston.info ";gameTick;color;lap;pieceIndex;normalizedIndex;inPieceDistance;throttle;velocity;acceleration;angle;angleS;angleSC;radius;predictVelocity;predictAcceleration"
         headerLogged = yes
 
     constructor: ({@name, @color}, @race) ->
@@ -50,10 +48,6 @@ module.exports = (winston, physics) ->
       @physics.initThrottleAndAccelerationRatio dataPoint(tick - 2), dataPoint(tick - 1)
       winston.verbose @physics.throttleAndAccelerationRatio
 
-    adjustThrottle: ->
-      velocity = @race.getVelocity @color
-      @setThrottle @physics.optimalThrottle @targetVelocity, velocity
-
     setThrottle: (throttle) ->
       if throttle < 0
         @throttle = 0.0
@@ -78,22 +72,74 @@ module.exports = (winston, physics) ->
       radius = @race.getPiece(@color).radius ? 999999
       throttle = @throttle
       predict = @prediction throttle
-      winston.info ";#{gameTick};#{@color};#{lap};#{pieceIndex};#{normalizedIndex};#{inPieceDistance};#{throttle};#{velocity};#{acceleration};#{angle};#{radius};#{predict?.velocity};#{predict?.acceleration}"
+      angleS = @race.getAngularSpeed @color
+      angleSC = @race.getAngularSpeedChange @color
+
+      log1 = ";#{gameTick};#{@color};#{lap};#{pieceIndex};#{normalizedIndex};#{inPieceDistance};#{throttle};#{velocity};#{acceleration};"
+      log2 = "#{angle};#{angleS};#{angleSC};#{radius};#{predict?.velocity};#{predict?.acceleration}"
+      winston.info log1 + log2
 
 
     carPositions: (data, control) ->
       @initPhysicsParameters()
-      @adjustThrottle()
-      if @race.getCarAngle(@color) > 0
-        console.log @race.getVelocity(@color), @race.getCarAngle(@color)
-        exit()
-      #        if 35 <= normalizedIndex <= 43
-      #          @throttle = 0.0
-      #        else if 75 <= normalizedIndex <= 83
-      #          @throttle = 0.2
+
+      @adjustVelocity()
 
 
+      if @race.currentTick < 4
+        @throttle = 1.0
 
       @logCurrent()
       control.throttle @throttle
       @throttles[@race.currentTick] = @throttle
+
+    adjustVelocity: ->
+      if @race.straightToFinish @color
+        @targetVelocity = 50
+        @adjustThrottle()
+        return
+
+      straightDistance = @race.straightDistanceAhead(@color)
+      bendedPiece = @race.getPieceAt @race.nextBendedPieceIndex(@color)
+      @targetVelocity = if bendedPiece.radius is 100 then 6.4 else 9
+      @adjustThrottle straightDistance
+
+    adjustThrottle: (distance = 0) ->
+      velocity = @race.getVelocity @color
+      @setThrottle @physics.optimalThrottleForVelocityInDistance @targetVelocity, distance, velocity
+
+
+#    predictAngleSpeedChange: ->
+#      return 0 unless @angleParams?
+#      tick = @race.currentTick
+#      {c0, c1, c2} = @angleParams
+#      velocity = @race.getVelocity @color
+#      angle2 = @race.getCarAngle(@color, tick - 2)
+#      angularSpeed1 = @race.getAngularSpeed(@color, tick - 1)
+#      c0 + (angularSpeed1 * c1 + c2 * velocity) + angle2 * c2 * velocity
+#
+#
+#    angleStuff: ->
+#      return if @race.getCarAngle(@color) is 0
+#      tick = @race.currentTick
+#
+#      if @angleParams?
+#        return
+#
+#      if @race.getAngularSpeedChange(@color, tick - 2) > 0
+#        aSC2 = @race.getAngularSpeedChange(@color, tick - 2)
+#        aSC1 = @race.getAngularSpeedChange(@color, tick - 1)
+#        aSC0 = @race.getAngularSpeedChange(@color, tick)
+#        aS1 = @race.getAngularSpeed(@color, tick - 1)
+#
+#        c3 = ((aSC0 - aS1 * (aSC1 / aSC2 - 1)) / aSC2) - 1
+#        c2 = c3 / @race.getVelocity(@color)
+#        c1 = aSC1 / aSC2 - 1 - c3
+#
+#        c0 = aSC0
+#
+#        @angleParams = {c0, c1, c2}
+
+
+
+
