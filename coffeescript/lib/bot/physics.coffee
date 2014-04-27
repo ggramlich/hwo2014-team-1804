@@ -9,6 +9,9 @@ module.exports = ->
     initThrottleAndAccelerationRatio: (dataPoint1, dataPoint2) ->
       @throttleAndAccelerationRatio = getThrottleAndAccelerationRatio dataPoint1, dataPoint2
 
+    predictVelocityAndAcceleration: (current) ->
+      predictVelocityAndAcceleration @throttleAndAccelerationRatio, current
+
   getThrottleAndAccelerationRatio = (dataPoint1, dataPoint2) ->
     {throttle1, velocity1, acceleration1} = dataPoint1
     {throttle2, velocity2, acceleration2} = dataPoint2

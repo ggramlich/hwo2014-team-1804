@@ -66,4 +66,17 @@ describe 'The physics', ->
     expect(throttleFactor).to.approximate 9.0
     expect(accelerationRatio).to.approximate 51.0
 
+  it 'predicts next velocity and acceleration from throttle and default ratios', ->
+    myPhysics = physics.create()
+    current =
+      throttle: 0.5
+      velocity: 1
+      acceleration: 4 / 49
+
+    {acceleration, velocity, distance, throttle} = myPhysics.predictVelocityAndAcceleration current
+    expect(acceleration).to.approximate (5 - 1) / 50
+    expect(velocity).to.approximate 1 + acceleration
+    expect(throttle).to.equal 0.5
+    expect(distance).to.approximate 1
+
 
