@@ -43,6 +43,8 @@ module.exports = (messages, async, connections, race, winston) ->
             winston.verbose dataString
             currentRace?.addCrash data.data, data.gameTick ? 0
             winston.verbose "Max Angle is now #{currentRace.maxAngle}"
+          else if msgType in ['gameEnd', 'tournamentEnd', 'spawn']
+            winston.verbose dataString
           else if msgType in ['lapFinished', 'gameStart', 'joinRace', 'finish', 'turboAvailable', 'createRace']
             winston.verbose dataString
           else
