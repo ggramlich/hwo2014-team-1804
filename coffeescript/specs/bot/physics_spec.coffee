@@ -10,6 +10,9 @@ Error.captureStackTrace = null
 expect::approximate = (value, epsilon = 0.0001) -> @between(value - epsilon, value + epsilon)
 
 describe 'The physics', ->
+  beforeEach ->
+    @myPhysics = physics.create()
+
   it 'calculates max velocity factor and acceleration ratio from two data points', ->
     dataPoint1 =
       throttle: 0.5
@@ -40,7 +43,7 @@ describe 'The physics', ->
     expect(acceleration).to.approximate (5 - 1) / 50
     expect(velocity).to.approximate 1 + acceleration
     expect(throttle).to.equal 0.5
-    expect(distance).to.approximate 1
+    expect(distance).to.approximate 1 + acceleration
 
   it 'can create and instance with reasonable defaults and adjustments', ->
     # max velocity = 9 * 0.8 = 7.2
@@ -54,29 +57,39 @@ describe 'The physics', ->
       velocity: 4.0
       acceleration: (7.2 - 4.0) / 51
 
-    myPhysics = physics.create()
-
-    {throttleFactor, accelerationRatio} = myPhysics.throttleAndAccelerationRatio
+    {throttleFactor, accelerationRatio} = @myPhysics.throttleAndAccelerationRatio
     expect(throttleFactor).to.approximate 10.0
     expect(accelerationRatio).to.approximate 49.0
 
-    myPhysics.initThrottleAndAccelerationRatio dataPoint1, dataPoint2
+    @myPhysics.initThrottleAndAccelerationRatio dataPoint1, dataPoint2
 
-    {throttleFactor, accelerationRatio} = myPhysics.throttleAndAccelerationRatio
+    {throttleFactor, accelerationRatio} = @myPhysics.throttleAndAccelerationRatio
     expect(throttleFactor).to.approximate 9.0
     expect(accelerationRatio).to.approximate 51.0
 
   it 'predicts next velocity and acceleration from throttle and default ratios', ->
-    myPhysics = physics.create()
     current =
       throttle: 0.5
       velocity: 1
       acceleration: 4 / 49
 
-    {acceleration, velocity, distance, throttle} = myPhysics.predictVelocityAndAcceleration current
+    {acceleration, velocity, distance, throttle} = @myPhysics.predictVelocityAndAcceleration current
     expect(acceleration).to.approximate (5 - 1) / 50
     expect(velocity).to.approximate 1 + acceleration
     expect(throttle).to.equal 0.5
-    expect(distance).to.approximate 1
+    expect(distance).to.approximate 1 + acceleration
 
+  it 'can advice the optimal throttle for target velocity', ->
+    current =
+      velocity: 2
+      acceleration: 3 / 49
 
+    # sanity check for expected values below
+    expect(@myPhysics.predictVelocity(current, 0.7)).to.approximate 2.1
+    expect(@myPhysics.predictVelocity(current, 0.1)).to.approximate 1.98
+
+    expect(@myPhysics.optimalThrottle 2.2, current).to.equal 1.0
+    expect(@myPhysics.optimalThrottle 1.9, current).to.equal 0.0
+    expect(@myPhysics.optimalThrottle 2.0, current).to.approximate 0.2
+    expect(@myPhysics.optimalThrottle 2.1, current).to.approximate 0.7
+    expect(@myPhysics.optimalThrottle 1.98, current).to.approximate 0.1
