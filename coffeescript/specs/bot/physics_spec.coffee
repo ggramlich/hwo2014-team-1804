@@ -37,7 +37,6 @@ describe 'The physics', ->
     current =
       throttle: 0.5
       velocity: 1
-      acceleration: 4 / 49
 
     {acceleration, velocity, distance, throttle} = physics.predictVelocityAndAcceleration ratios, current
     expect(acceleration).to.approximate (5 - 1) / 50
@@ -71,7 +70,6 @@ describe 'The physics', ->
     current =
       throttle: 0.5
       velocity: 1
-      acceleration: 4 / 49
 
     {acceleration, velocity, distance, throttle} = @myPhysics.predictVelocityAndAcceleration current
     expect(acceleration).to.approximate (5 - 1) / 50
@@ -80,16 +78,14 @@ describe 'The physics', ->
     expect(distance).to.approximate 1 + acceleration
 
   it 'can advice the optimal throttle for target velocity', ->
-    current =
-      velocity: 2
-      acceleration: 3 / 49
+    currentVelocity = 2
 
     # sanity check for expected values below
-    expect(@myPhysics.predictVelocity(current, 0.7)).to.approximate 2.1
-    expect(@myPhysics.predictVelocity(current, 0.1)).to.approximate 1.98
+    expect(@myPhysics.predictVelocity(currentVelocity, 0.7)).to.approximate 2.1
+    expect(@myPhysics.predictVelocity(currentVelocity, 0.1)).to.approximate 1.98
 
-    expect(@myPhysics.optimalThrottle 2.2, current).to.equal 1.0
-    expect(@myPhysics.optimalThrottle 1.9, current).to.equal 0.0
-    expect(@myPhysics.optimalThrottle 2.0, current).to.approximate 0.2
-    expect(@myPhysics.optimalThrottle 2.1, current).to.approximate 0.7
-    expect(@myPhysics.optimalThrottle 1.98, current).to.approximate 0.1
+    expect(@myPhysics.optimalThrottle 2.2, currentVelocity).to.equal 1.0
+    expect(@myPhysics.optimalThrottle 1.9, currentVelocity).to.equal 0.0
+    expect(@myPhysics.optimalThrottle 2.0, currentVelocity).to.approximate 0.2
+    expect(@myPhysics.optimalThrottle 2.1, currentVelocity).to.approximate 0.7
+    expect(@myPhysics.optimalThrottle 1.98, currentVelocity).to.approximate 0.1

@@ -15,11 +15,11 @@ module.exports = (objects) ->
         current.throttle = throttle
       predictVelocityAndAcceleration @throttleAndAccelerationRatio, current
 
-    predictVelocity: (current, throttle) -> @predictVelocityAndAcceleration(current, throttle).velocity
+    predictVelocity: (velocity, throttle) -> @predictVelocityAndAcceleration({velocity}, throttle).velocity
 
-    optimalThrottle: (targetVelocity, current) ->
+    optimalThrottle: (targetVelocity, currentVelocity) ->
       {throttleFactor, accelerationRatio} = @throttleAndAccelerationRatio
-      throttle = ((targetVelocity - current.velocity) * (accelerationRatio + 1) + current.velocity) / throttleFactor
+      throttle = ((targetVelocity - currentVelocity) * (accelerationRatio + 1) + currentVelocity) / throttleFactor
       if throttle > 1.0
         1.0
       else if throttle < 0.0
@@ -47,13 +47,10 @@ module.exports = (objects) ->
 
   predictVelocityAndAcceleration = (ratios, current) ->
     {throttleFactor, accelerationRatio} = ratios
-    currentAcceleration = current.acceleration
-    currentVelocity = current.velocity
+    {velocity, throttle} = current
 
-    throttle = current.throttle
-
-    acceleration = (throttle * throttleFactor - currentVelocity) / (accelerationRatio + 1)
-    velocity = currentVelocity + acceleration
+    acceleration = (throttle * throttleFactor - velocity) / (accelerationRatio + 1)
+    velocity = velocity + acceleration
     distance = velocity
 
     {acceleration, velocity, distance, throttle}
