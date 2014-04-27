@@ -166,11 +166,13 @@ describe 'The race', ->
         expect(@race.getLane 'red').to.eql currentPositionRed.piecePosition.lane
         expect(@race.getCarAngle 'red').to.equal currentPositionRed.angle
         expect(@race.getCarDistance 'red').to.approximate @race.distance currentPositionRed.piecePosition
+        expect(@race.getNormalizedPieceIndex 'red').to.eql 0
 
         currentPiecePositionBlue = currentPositions[1].piecePosition
         initialPiecePositionBlue = samplePositions[0][1].piecePosition
         expect(@race.getCarDistance 'blue').to.approximate @race.distance(currentPiecePositionBlue, initialPiecePositionBlue)
         expect(@race.getLane 'blue').to.eql currentPiecePositionBlue.lane
+        expect(@race.getNormalizedPieceIndex 'blue').to.eql -1
 
       it 'provides the current piece and piece ahead', ->
         expect(@race.getPiece 'red').to.eql sampleRace.track.pieces[0]
