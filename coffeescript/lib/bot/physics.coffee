@@ -27,6 +27,21 @@ module.exports = (objects) ->
       else
         throttle
 
+    distanceToBrakeToVelocity: (targetVelocity, velocity) ->
+      totalDistance = 0
+      while velocity > targetVelocity
+        next = @predictVelocityAndAcceleration {velocity}, 0.0
+        {velocity, distance} = next
+        totalDistance += distance
+      totalDistance
+
+    optimalThrottleForVelocityInDistance: (targetVelocity, distance, currentVelocity) ->
+      if distance - currentVelocity > @distanceToBrakeToVelocity targetVelocity, currentVelocity
+        1.0
+      else
+        @optimalThrottle(targetVelocity, currentVelocity)
+
+
   getThrottleAndAccelerationRatio = (dataPoint1, dataPoint2) ->
     {throttle1, velocity1, acceleration1} = dataPoint1
     {throttle2, velocity2, acceleration2} = dataPoint2

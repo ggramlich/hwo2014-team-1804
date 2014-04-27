@@ -103,3 +103,24 @@ describe 'The physics', ->
     expect(@myPhysics.optimalThrottle 2.0, currentVelocity).to.approximate 0.2
     expect(@myPhysics.optimalThrottle 2.1, currentVelocity).to.approximate 0.7
     expect(@myPhysics.optimalThrottle 1.98, currentVelocity).to.approximate 0.1
+
+  it 'can advice the optimal throttle for target velocity at a given distance', ->
+    # assuming that we can go as fast as we want before we reach the distance
+    currentVelocity = 5
+
+    tick1 = @myPhysics.predictVelocityAndAcceleration {velocity: currentVelocity, throttle: 1.0}
+    tick2 = @myPhysics.predictVelocityAndAcceleration tick1, 1.0
+    tick3 = @myPhysics.predictVelocityAndAcceleration tick2, 0.0
+    tick4 = @myPhysics.predictVelocityAndAcceleration tick3, (@myPhysics.optimalThrottle 5.0, tick3.velocity)
+#    console.log tick1
+#    console.log tick2
+#    console.log tick3
+#    console.log tick4
+
+    expect(@myPhysics.optimalThrottleForVelocityInDistance 5, tick4.distance, currentVelocity).to.equal 1.0
+    expect(@myPhysics.optimalThrottleForVelocityInDistance 5, tick4.distance - tick1.distance, tick1.velocity).to.equal 1.0
+    expect(@myPhysics.optimalThrottleForVelocityInDistance 5, tick4.distance - tick2.distance, tick2.velocity).to.equal 0.0
+    expect(@myPhysics.optimalThrottleForVelocityInDistance 5, tick4.distance - tick3.distance, tick3.velocity).to.equal tick4.throttle
+
+
+
