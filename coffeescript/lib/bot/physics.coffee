@@ -16,3 +16,16 @@ module.exports = ->
     accelerationRatio = (targetVelocity  - v1) / a1
 
     {throttleFactor, accelerationRatio}
+
+  predictVelocityAndAcceleration: (ratios, current) ->
+    {throttleFactor, accelerationRatio} = ratios
+    currentAcceleration = current.acceleration
+    currentVelocity = current.velocity
+
+    throttle = current.throttle
+
+    distance = currentVelocity
+    acceleration = (throttle * throttleFactor - currentVelocity) / (accelerationRatio + 1)
+    velocity = currentVelocity + acceleration
+
+    {acceleration, velocity, distance, throttle}

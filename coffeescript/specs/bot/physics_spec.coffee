@@ -24,3 +24,20 @@ describe 'The physics', ->
     {throttleFactor, accelerationRatio} = physics.getThrottleAndAccelerationRatio dataPoint1, dataPoint2
     expect(throttleFactor).to.approximate 10.0
     expect(accelerationRatio).to.approximate 49.0
+
+  it 'predicts next velocity and acceleration from throttle and ratios', ->
+    # max velocity = throttleFactor * throttle = 50
+    # acceleration = (max velocity - current velocity) / accelerationRatio
+    ratios =
+      throttleFactor: 10.0
+      accelerationRatio: 49.0
+    current =
+      throttle: 0.5
+      velocity: 1
+      acceleration: 4 / 49
+
+    {acceleration, velocity, distance, throttle} = physics.predictVelocityAndAcceleration ratios, current
+    expect(acceleration).to.approximate (5 - 1) / 50
+    expect(velocity).to.approximate 1 + acceleration
+    expect(throttle).to.equal 0.5
+    expect(distance).to.approximate 1
