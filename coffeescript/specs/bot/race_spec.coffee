@@ -210,11 +210,23 @@ describe 'The race', ->
         @race.addCarPositions createBlueCarPositions(4, 10.0, 0, 1, 1), 40
         expect(@race.nextBendedPieceIndex 'blue').to.equal 4
         expect(@race.straightDistanceAhead 'blue').to.equal 0
+        expect(@race.straightToFinish 'blue').to.be.false()
 
         # Test for end of lane
         @race.addCarPositions createBlueCarPositions(35, 0.0, 0, 1, 1), 500
         expect(@race.nextBendedPieceIndex 'blue').to.equal 44
         expect(@race.straightDistanceAhead 'blue').to.equal 890
+        expect(@race.straightToFinish 'blue').to.be.false()
+
+        # Second lap
+        @race.addCarPositions createBlueCarPositions(75, 0.0, 0, 1, 1), 1000
+        expect(@race.straightToFinish 'blue').to.be.false()
+
+        # Third and last lap
+        @race.addCarPositions createBlueCarPositions(114, 20.0, 0, 1, 1), 2000
+        expect(@race.straightToFinish 'blue').to.be.false()
+        @race.addCarPositions createBlueCarPositions(115, 0.0, 0, 1, 1), 2005
+        expect(@race.straightToFinish 'blue').to.be.true()
 
 
     describe 'velocity and acceleration calculation', ->

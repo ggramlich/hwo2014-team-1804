@@ -41,9 +41,10 @@ module.exports = (objects) ->
     getPiecePosition: (color, tick = @currentTick) -> @carPositions[color].getPiecePosition tick
     getLane: (color, tick = @currentTick) -> @carLanes[color].at @getPiecePosition color, tick
     getCarDistance: (color, tick = @currentTick) -> @distance @getPiecePosition(color, tick), @getPiecePosition(color, 0), @getCarLane(color)
-    straightDistanceAhead: (color, tick = @currentTick) -> Math.max(0, @distance(@nextBendedPiecePosition(color, tick), @getPiecePosition(color, tick)))
+    straightDistanceAhead: (color, tick = @currentTick) -> Math.max 0, @distance(@nextBendedPiecePosition(color, tick), @getPiecePosition(color, tick))
     nextBendedPiecePosition: (color, tick = @currentTick) -> @createPositionForNormalizedIndex(@nextBendedPieceIndex(color, tick))
     nextBendedPieceIndex: (color, tick = @currentTick) -> @track.nextBendedPieceIndex @getNormalizedPieceIndex(color, tick)
+    straightToFinish: (color, tick = @currentTick) -> @track.straightToFinish @getNormalizedPieceIndex(color, tick), @raceSession.laps
 
     getCarAngle: (color, tick = @currentTick) -> @carPositions[color].getAngle(tick)
     getAngularSpeed: (color, tick = @currentTick) -> @getCarAngle(color, tick) - @getCarAngle(color, tick - 1)
@@ -107,6 +108,11 @@ module.exports = (objects) ->
           break unless (piece.length?)
           index++
         index
+
+      straightToFinish: (index, laps) ->
+        for i in [laps * @pieces.length..index] by -1
+          return no unless @pieceAt(i).length?
+        yes
 
     ##################################
     # Lanes
