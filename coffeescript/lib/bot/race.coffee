@@ -89,7 +89,7 @@ module.exports = (objects) ->
 
     addCrash: ({color}, tick = @currentTick) ->
       # try to be on the safe side, actually we might want to increase the maxAngle seen so far
-      lastAngle = @getCarAngle color, tick - 1
+      lastAngle = Math.abs @getCarAngle color, tick - 1
       if lastAngle < @maxAngle
         @maxAngle = lastAngle
 

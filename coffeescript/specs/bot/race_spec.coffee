@@ -272,6 +272,12 @@ describe 'The race', ->
         expect(bendedPiecesAhead[1]).to.eql distance: dist8, radius: 210
         expect(bendedPiecesAhead[2]).to.eql distance: dist11, radius: 190
 
+        # Inside a bended piece
+        @race.addCarPositions createBlueCarPositions(4, 10.0, 0, 1, 1), 40
+        bendedPiecesAhead = @race.bendedPiecesAhead('blue')
+        dist4to8 = @race.distance(createPosition(8, 0), createPosition(4, 10.0), @race.getCarLane('blue'))
+        expect(bendedPiecesAhead[0]).to.eql distance: 0, radius: 90
+        expect(bendedPiecesAhead[1]).to.eql distance: dist4to8, radius: 190
 
 
     describe 'velocity and acceleration calculation', ->
@@ -321,7 +327,7 @@ describe 'The race', ->
       it 'is set to the last angle before a crash', ->
         positions = samplePositions[0]
         positions[0].angle = 40.0
-        positions[1].angle = 45.0
+        positions[1].angle = -45.0
         @race.addCarPositions positions, 20
         @race.addCrash color: 'blue', 21
 
