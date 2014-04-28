@@ -54,7 +54,7 @@ module.exports = (winston, physics) ->
       control.ignore()
 
     reduceFactorMaxSlip: ->
-      @factorMaxSlip = 0.975 * @factorMaxSlip
+      @factorMaxSlip = 0.98 * @factorMaxSlip
 
     switchDirection: ->
       if @switchRight
@@ -140,7 +140,7 @@ module.exports = (winston, physics) ->
         @targetVelocity = 100
         return @adjustThrottle()
 
-      if @onBendedPiece() and @predictAngle() > @race.maxAngle - 2
+      if @onBendedPiece() and @predictAngle() > @race.maxAngle - 1
         @targetVelocity = @maxVelocityForRadius @getRadius() / 2
         return @adjustThrottle()
 
@@ -156,7 +156,8 @@ module.exports = (winston, physics) ->
       angle = @race.getCarAngle(@color)
       angleS = @race.getAngularSpeed(@color)
       angleSC = @race.getAngularSpeedChange(@color)
-      Math.abs(angle + 5 * angleS + 4 * angleSC)
+      velocity = @race.getVelocity @color
+      Math.abs(angle + (velocity + 2) * angleS + velocity * angleSC)
 
     maxVelocityForRadius: (radius) ->
       # v^2 / r = @factorMaxSlip
@@ -168,7 +169,7 @@ module.exports = (winston, physics) ->
 
     throttleForVelocityInDistance: (targetVelocity, distance = 0) ->
       if distance > 0
-        distance += 30
+        distance += 20
       velocity = @race.getVelocity @color
       @physics.optimalThrottleForVelocityInDistance targetVelocity, distance, velocity
 
