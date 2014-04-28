@@ -130,6 +130,38 @@ describe 'The race', ->
       expect(@race.distance piecePosition, initialPosition, 'red').to.approximate(100 + 86.3937)
       expect(@race.distance piecePosition, initialPosition, 'blue').to.approximate(100 + 70.6858)
 
+    it 'provides the radius on lane', ->
+      # lane 0 is default
+      # lane 0 is outer lane on 4 and 8, but inner lane on 29
+      expect(@race.track.radiusOnLane 4, @redLane).to.approximate 110
+      expect(@race.track.radiusOnLane 8, @redLane).to.approximate 210
+      expect(@race.track.radiusOnLane 29, @redLane).to.approximate 90
+
+      @redLane.add createPosition 4, 0.0, 0, 1, 1
+      @redLane.add createPosition 8, 0.0, 0, 1, 1
+      @redLane.add createPosition 29, 0.0, 0, 1, 1
+      # lane 1 is inner lane on 4 and 8, but outer lane on 29
+      expect(@race.track.radiusOnLane 4, @redLane).to.approximate 90
+      expect(@race.track.radiusOnLane 8, @redLane).to.approximate 190
+      expect(@race.track.radiusOnLane 29, @redLane).to.approximate 110
+
+      @race.addCarPositions [
+        {
+          id: color: 'red'
+          piecePosition: createPosition 4, 0.0, 0, 0, 0
+        }
+        {
+          id: color: 'blue'
+          piecePosition: createPosition 4, 0.0, 0, 1, 1
+        }
+      ]
+      @redLane = @race.getCarLane 'red'
+      @blueLane = @race.getCarLane 'blue'
+      expect(@race.getRadiusOnLane(4, @redLane)).to.be 110
+      expect(@race.getRadiusOnLane(4, 'red')).to.be 110
+      expect(@race.getRadiusOnLane(4, @blueLane)).to.be 90
+      expect(@race.getRadiusOnLane(4, 'blue')).to.be 90
+
     it 'approximates length for switch on straight piece given the lanes', ->
       # from 0 to 1
       @redLane.add createPosition 3, 0.0, 0, 0, 1

@@ -23,11 +23,16 @@ module.exports = (objects) ->
     normalizedPieceIndex: ({pieceIndex, lap}) => lap * @track.pieces.length + pieceIndex
     createPositionForNormalizedIndex: (normalizedIndex) -> createPosition(mod(normalizedIndex, @track.pieces.length), 0, Math.floor(normalizedIndex / @track.pieces.length))
 
-    distance: (piecePosition, initialPosition = createPosition(0, 0), carLane = new CarLane) ->
-      if not (carLane instanceof CarLane)
-        carLane = @getCarLane carLane
+    distance: (piecePosition, initialPosition = createPosition(0, 0), carLane) ->
+      carLane = @ensureCarLane carLane
       sum = @track.addPiecesLengthsBetween initialPosition, piecePosition, carLane
       sum + piecePosition.inPieceDistance
+
+    ensureCarLane: (carLane = new CarLane) ->
+      if (carLane instanceof CarLane)
+        carLane
+      else # It is a color
+        @getCarLane carLane
 
     addCarPositions: (carPositions, tick = -1) ->
       @currentTick = tick
@@ -46,6 +51,8 @@ module.exports = (objects) ->
     nextBendedPiecePosition: (color, tick = @currentTick) -> @createPositionForNormalizedIndex(@nextBendedPieceIndex(color, tick))
     nextBendedPieceIndex: (color, tick = @currentTick) -> @track.nextBendedPieceIndex @getNormalizedPieceIndex(color, tick)
     straightToFinish: (color, tick = @currentTick) -> @track.straightToFinish @getNormalizedPieceIndex(color, tick), @raceSession.laps
+
+    getRadiusOnLane: (normalizedIndex, carLane) -> @track.radiusOnLane normalizedIndex, @ensureCarLane(carLane)
 
     getCarAngle: (color, tick = @currentTick) -> @carPositions[color].getAngle(tick)
     getAngularSpeed: (color, tick = @currentTick) -> @getCarAngle(color, tick) - @getCarAngle(color, tick - 1)
@@ -97,6 +104,12 @@ module.exports = (objects) ->
           ratio = (outerLength / innerLength)
           factor = 1.023 / Math.pow(ratio, 2.2)
           innerLength + (outerLength - innerLength) * factor
+
+      radiusOnLane: (index, carLane) ->
+        {startDistance, endDistance, isSwitch} = @lanes.getDistances carLane.atIndex index
+        piece = @pieceAt(index)
+        bended = if piece.angle < 0 then 1 else -1
+        piece.radius + bended * startDistance
 
       bendedPieceLength: ({radius, angle}, distanceFromCenter) ->
         bended = if angle < 0 then 1 else -1
