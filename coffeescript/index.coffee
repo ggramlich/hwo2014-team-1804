@@ -7,14 +7,14 @@ winston = container.get 'winston'
 # winston.level = 'debug' # most
 # winston.level = 'verbose' # a little more than info
 
-# keimola, germany, usa
+# keimola, germany, usa, france
 if process.env.TESTRACE?
   testRace =
-    trackName: 'keimola'
-    carCount: 4
+    trackName: 'usa'
+    carCount: 3
     joinOnly: off
 
-winston.info "I'm #{name} and connect to #{serverHost}:#{serverPort}"
+winston.verbose "I'm #{name} and connect to #{serverHost}:#{serverPort}"
 
 botData = {name, key}
 
