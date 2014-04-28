@@ -11,7 +11,7 @@ module.exports = (winston, physics) ->
       logHeader()
       @physics = physics.create()
       @throttles = []
-      @curvedVelocityFactor = 0.45
+      @curvedVelocityFactor = 0.46
 
 #      if @color is 'red'
 #        @throttle = 0.7
@@ -27,6 +27,32 @@ module.exports = (winston, physics) ->
       @lastSwitch = 0
       # @throttle = 0.65
       @targetVelocity = 6.54
+
+    # msgType
+    carPositions: (data, control) ->
+      @initPhysicsParameters()
+
+      @adjustVelocity()
+
+
+      if @race.currentTick < 4
+        @throttle = 1.0
+
+      @logCurrent()
+      control.throttle @throttle
+      @throttles[@race.currentTick] = @throttle
+
+    # msgType
+    crash: (data, control) ->
+      winston.verbose data
+      if data.data.color is @color
+        winston.info "#{logPrefix()};Crash, Curved vel old #{@curvedVelocityFactor}"
+        @reduceCurvedVelocityFactor()
+        winston.info "#{logPrefix()};Crash, Curved vel new #{@curvedVelocityFactor}"
+      control.ignore()
+
+    reduceCurvedVelocityFactor: ->
+      @curvedVelocityFactor = 0.97 * @curvedVelocityFactor
 
     switchDirection: ->
       if @switchRight
@@ -65,34 +91,24 @@ module.exports = (winston, physics) ->
       gameTick = @race.currentTick
       return if (gameTick % logOnEveryNthTick)
 
-      normalizedIndex = @race.getNormalizedPieceIndex @color
       velocity = @race.getVelocity @color
       acceleration = @race.getAcceleration @color
       angle = @race.getCarAngle @color
-      {pieceIndex, inPieceDistance, lap} = @myPosition()
       radius = @race.getPiece(@color).radius ? 999999
       throttle = @throttle
       predict = @prediction throttle
       angleS = @race.getAngularSpeed @color
       angleSC = @race.getAngularSpeedChange @color
 
-      log1 = ";#{gameTick};#{@color};#{lap};#{pieceIndex};#{normalizedIndex};#{inPieceDistance};#{throttle};#{velocity};#{acceleration};"
+      log1 = "#{@logPrefix()};#{throttle};#{velocity};#{acceleration};"
       log2 = "#{angle};#{angleS};#{angleSC};#{radius};#{predict?.velocity};#{predict?.acceleration}"
       winston.info log1 + log2
 
-
-    carPositions: (data, control) ->
-      @initPhysicsParameters()
-
-      @adjustVelocity()
-
-
-      if @race.currentTick < 4
-        @throttle = 1.0
-
-      @logCurrent()
-      control.throttle @throttle
-      @throttles[@race.currentTick] = @throttle
+    logPrefix: ->
+      gameTick = @race.currentTick
+      normalizedIndex = @race.getNormalizedPieceIndex @color
+      {pieceIndex, inPieceDistance, lap} = @myPosition()
+      ";#{gameTick};#{@color};#{lap};#{pieceIndex};#{normalizedIndex};#{inPieceDistance}"
 
     adjustVelocity: ->
       if @race.straightToFinish @color

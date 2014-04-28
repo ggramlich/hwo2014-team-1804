@@ -6,6 +6,8 @@ module.exports = (messages, async, connections, race, winston) ->
       if not called
         send msgType: "ping"
     , 10
+    ignore: ->
+      called = yes
     throttle: (value) ->
       called = yes
       send msgType: "throttle", data: value
