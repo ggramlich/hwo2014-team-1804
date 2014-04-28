@@ -13,6 +13,7 @@ module.exports = (winston, physics) ->
       @throttles = []
       @maxSlipInitialized = no
       @factorMaxSlip = 0.5
+      @maxSlipAngle = 0
 
 #      if @color is 'red'
 #        @throttle = 0.7
@@ -35,7 +36,7 @@ module.exports = (winston, physics) ->
       @initMaxSlipFactor()
 
       @adjustVelocity()
-
+      @maxSlipAngle = Math.max(@maxSlipAngle, @race.getCarAngle(@color))
 
       if @race.currentTick < 4
         @throttle = 1.0
@@ -51,6 +52,13 @@ module.exports = (winston, physics) ->
         winston.info "#{@logPrefix()};Crash, Curved vel old #{@factorMaxSlip}"
         @reduceFactorMaxSlip()
         winston.info "#{@logPrefix()};Crash, Curved vel new #{@factorMaxSlip}"
+      control.ignore()
+
+    lapFinished: (data, control) ->
+      angleDiff = @race.maxAngle - @maxSlipAngle
+      if angleDiff > 0
+        @factorMaxSlip = @factorMaxSlip * (1 + angleDiff * angleDiff / 10000)
+      @maxSlipAngle = 0
       control.ignore()
 
     reduceFactorMaxSlip: ->
@@ -140,7 +148,7 @@ module.exports = (winston, physics) ->
         @targetVelocity = 100
         return @adjustThrottle()
 
-      if @onBendedPiece() and @predictAngle() > @race.maxAngle - 1
+      if @onBendedPiece() and @predictAngle() > @race.maxAngle
         @targetVelocity = @maxVelocityForRadius @getRadius() / 2
         return @adjustThrottle()
 
@@ -157,7 +165,7 @@ module.exports = (winston, physics) ->
       angleS = @race.getAngularSpeed(@color)
       angleSC = @race.getAngularSpeedChange(@color)
       velocity = @race.getVelocity @color
-      Math.abs(angle + (velocity + 2) * angleS + velocity * angleSC)
+      Math.abs(angle + (velocity + 1) * angleS + velocity * angleSC)
 
     maxVelocityForRadius: (radius) ->
       # v^2 / r = @factorMaxSlip
