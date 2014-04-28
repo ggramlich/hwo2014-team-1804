@@ -260,6 +260,19 @@ describe 'The race', ->
         @race.addCarPositions createBlueCarPositions(115, 0.0, 0, 1, 1), 2005
         expect(@race.straightToFinish 'blue').to.be.true()
 
+      it 'provides the bended pieces ahead', ->
+        currentPositions = samplePositions[-1..][0]
+        currentPositionRed = currentPositions[0].piecePosition
+        dist4 = @race.distance(createPosition(4, 0), currentPositionRed)
+        dist8 = @race.distance(createPosition(8, 0), currentPositionRed)
+        dist11 = @race.distance(createPosition(11, 0), currentPositionRed)
+
+        bendedPiecesAhead = @race.bendedPiecesAhead('red')
+        expect(bendedPiecesAhead[0]).to.eql distance: dist4, radius: 110
+        expect(bendedPiecesAhead[1]).to.eql distance: dist8, radius: 210
+        expect(bendedPiecesAhead[2]).to.eql distance: dist11, radius: 190
+
+
 
     describe 'velocity and acceleration calculation', ->
       @beforeEach ->

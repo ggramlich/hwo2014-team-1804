@@ -20,6 +20,7 @@ module.exports = (objects) ->
         @carLanes[color] = new CarLane
         @carPositions[color] = new CarPositions
 
+    maxNormalizedPieceIndex: -> @raceSession.laps * @track.pieces.length
     normalizedPieceIndex: ({pieceIndex, lap}) => lap * @track.pieces.length + pieceIndex
     createPositionForNormalizedIndex: (normalizedIndex) -> createPosition(mod(normalizedIndex, @track.pieces.length), 0, Math.floor(normalizedIndex / @track.pieces.length))
 
@@ -50,7 +51,7 @@ module.exports = (objects) ->
     straightDistanceAhead: (color, tick = @currentTick) -> Math.max 0, @distance(@nextBendedPiecePosition(color, tick), @getPiecePosition(color, tick))
     nextBendedPiecePosition: (color, tick = @currentTick) -> @createPositionForNormalizedIndex(@nextBendedPieceIndex(color, tick))
     nextBendedPieceIndex: (color, tick = @currentTick) -> @track.nextBendedPieceIndex @getNormalizedPieceIndex(color, tick)
-    straightToFinish: (color, tick = @currentTick) -> @track.straightToFinish @getNormalizedPieceIndex(color, tick), @raceSession.laps
+    straightToFinish: (color, tick = @currentTick) -> @track.straightToFinish @getNormalizedPieceIndex(color, tick), @maxNormalizedPieceIndex()
 
     getRadiusOnLane: (normalizedIndex, carLane) -> @track.radiusOnLane normalizedIndex, @ensureCarLane(carLane)
 
@@ -59,6 +60,24 @@ module.exports = (objects) ->
     getAngularSpeedChange: (color, tick = @currentTick) -> @getAngularSpeed(color, tick) - @getAngularSpeed(color, tick - 1)
 
     getCarLane: (color) -> objects.clone @carLanes[color]
+
+    bendedPiecesAhead: (color, carLane = @getCarLane(color)) ->
+      initialPosition = @getPiecePosition(color)
+      initialIndex = @getNormalizedPieceIndex color
+      maxNormalizedPieceIndex = @maxNormalizedPieceIndex()
+
+      currentRadius = 0
+
+      createEntry = (index) =>
+        piece = @getPieceAt index
+        return if piece.length? or (radius = @getRadiusOnLane(index, carLane)) is currentRadius
+
+        currentRadius = radius
+        distance = Math.max 0, @distance(@createPositionForNormalizedIndex(index), initialPosition, carLane)
+        {radius, distance}
+
+      (entry for index in [initialIndex..maxNormalizedPieceIndex] when (entry = createEntry(index))?)
+
 
     getVelocity: (color, tick = @currentTick, numberOfTicks = 1) ->
       if tick <= 0 or numberOfTicks <= 0 then return 0
@@ -123,8 +142,8 @@ module.exports = (objects) ->
           index++
         index
 
-      straightToFinish: (index, laps) ->
-        for i in [laps * @pieces.length..index] by -1
+      straightToFinish: (index, maxNormalizedPieceIndex) ->
+        for i in [maxNormalizedPieceIndex..index] by -1
           return no unless @pieceAt(i).length?
         yes
 
