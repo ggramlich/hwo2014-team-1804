@@ -11,7 +11,8 @@ module.exports = (winston, physics) ->
       logHeader()
       @physics = physics.create()
       @throttles = []
-      @curvedVelocityFactor = 0.48
+      @maxSlipInitialized = no
+      @factorMaxSlip = 0.5
 
 #      if @color is 'red'
 #        @throttle = 0.7
@@ -31,6 +32,7 @@ module.exports = (winston, physics) ->
     # msgType
     carPositions: (data, control) ->
       @initPhysicsParameters()
+      @initMaxSlipFactor()
 
       @adjustVelocity()
 
@@ -46,13 +48,13 @@ module.exports = (winston, physics) ->
     crash: (data, control) ->
       winston.verbose data
       if data.data.color is @color
-        winston.info "#{@logPrefix()};Crash, Curved vel old #{@curvedVelocityFactor}"
-        @reduceCurvedVelocityFactor()
-        winston.info "#{@logPrefix()};Crash, Curved vel new #{@curvedVelocityFactor}"
+        winston.info "#{@logPrefix()};Crash, Curved vel old #{@factorMaxSlip}"
+        @reduceFactorMaxSlip()
+        winston.info "#{@logPrefix()};Crash, Curved vel new #{@factorMaxSlip}"
       control.ignore()
 
-    reduceCurvedVelocityFactor: ->
-      @curvedVelocityFactor = 0.985 * @curvedVelocityFactor
+    reduceFactorMaxSlip: ->
+      @factorMaxSlip = 0.975 * @factorMaxSlip
 
     switchDirection: ->
       if @switchRight
@@ -75,6 +77,19 @@ module.exports = (winston, physics) ->
       @physics.initThrottleAndAccelerationRatio dataPoint(tick - 2), dataPoint(tick - 1)
       winston.verbose @physics.throttleAndAccelerationRatio
 
+    initMaxSlipFactor: ->
+      return if @maxSlipInitialized or @race.getCarAngle(@color) is 0
+
+      a = Math.abs @race.getCarAngle @color
+      v = @race.getVelocity @color
+      r = @getRadius()
+      b = v / r * 180 / Math.PI
+      bslip = b - a
+      vslip = r * b * Math.PI / 180
+      @factorMaxSlip = vslip * vslip / r
+      console.log @logPrefix()  + ";initMaxSlipFactor;a:#{a}, v:#{v}, r:#{r}, b:#{b}, bs:#{bslip}, vs:#{vslip}, fac:#{@factorMaxSlip}"
+      @maxSlipInitialized = yes
+
     setThrottle: (throttle) ->
       if throttle < 0
         @throttle = 0.0
@@ -94,7 +109,7 @@ module.exports = (winston, physics) ->
       velocity = @race.getVelocity @color
       acceleration = @race.getAcceleration @color
       angle = @race.getCarAngle @color
-      radius = @race.getPiece(@color).radius ? 999999
+      radius = @getRadius()
       throttle = @throttle
       predict = @prediction throttle
       angleS = @race.getAngularSpeed @color
@@ -110,6 +125,16 @@ module.exports = (winston, physics) ->
       {pieceIndex, inPieceDistance, lap} = @myPosition()
       ";#{gameTick};#{@color};#{lap};#{pieceIndex};#{normalizedIndex};#{inPieceDistance}"
 
+    onBendedPiece: -> @race.getPiece(@color).radius?
+    getRadius: ->
+      if @onBendedPiece()
+        pieceIndex = @race.getNormalizedPieceIndex @color
+        @getRadiusOnLane pieceIndex
+      else
+        999999
+
+    getRadiusOnLane: (pieceIndex) -> @race.getRadiusOnLane pieceIndex, @race.getCarLane(@color)
+
     adjustVelocity: ->
       if @race.straightToFinish @color
         @targetVelocity = 50
@@ -118,7 +143,6 @@ module.exports = (winston, physics) ->
 
       straightDistance = @race.straightDistanceAhead(@color)
       bendedPieceIndex = @race.nextBendedPieceIndex(@color)
-      bendedPiece = @race.getPieceAt bendedPieceIndex
       radius = @race.getRadiusOnLane bendedPieceIndex, @race.getCarLane(@color)
       @targetVelocity = @maxVelocityForRadius radius
       @adjustThrottle straightDistance
@@ -126,7 +150,7 @@ module.exports = (winston, physics) ->
     maxVelocityForRadius: (radius) ->
       # v^2 / r = 0.39
 
-      Math.sqrt(@curvedVelocityFactor * radius)
+      Math.sqrt(@factorMaxSlip * radius)
 
 
     adjustThrottle: (distance = 0) ->
