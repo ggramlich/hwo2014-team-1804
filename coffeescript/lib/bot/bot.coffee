@@ -11,6 +11,7 @@ module.exports = (winston, physics) ->
       logHeader()
       @physics = physics.create()
       @throttles = []
+      @curvedVelocityFactor = 0.45
 
 #      if @color is 'red'
 #        @throttle = 0.7
@@ -100,9 +101,17 @@ module.exports = (winston, physics) ->
         return
 
       straightDistance = @race.straightDistanceAhead(@color)
-      bendedPiece = @race.getPieceAt @race.nextBendedPieceIndex(@color)
-      @targetVelocity = if bendedPiece.radius is 100 then 6.4 else 9
+      bendedPieceIndex = @race.nextBendedPieceIndex(@color)
+      bendedPiece = @race.getPieceAt bendedPieceIndex
+      radius = @race.getRadiusOnLane bendedPieceIndex, @race.getCarLane(@color)
+      @targetVelocity = @maxVelocityForRadius radius
       @adjustThrottle straightDistance
+
+    maxVelocityForRadius: (radius) ->
+      # v^2 / r = 0.39
+
+      Math.sqrt(@curvedVelocityFactor * radius)
+
 
     adjustThrottle: (distance = 0) ->
       velocity = @race.getVelocity @color
