@@ -11,7 +11,7 @@ module.exports = (winston, physics) ->
       logHeader()
       @physics = physics.create()
       @throttles = []
-      @curvedVelocityFactor = 0.46
+      @curvedVelocityFactor = 0.48
 
 #      if @color is 'red'
 #        @throttle = 0.7
@@ -46,13 +46,13 @@ module.exports = (winston, physics) ->
     crash: (data, control) ->
       winston.verbose data
       if data.data.color is @color
-        winston.info "#{logPrefix()};Crash, Curved vel old #{@curvedVelocityFactor}"
+        winston.info "#{@logPrefix()};Crash, Curved vel old #{@curvedVelocityFactor}"
         @reduceCurvedVelocityFactor()
-        winston.info "#{logPrefix()};Crash, Curved vel new #{@curvedVelocityFactor}"
+        winston.info "#{@logPrefix()};Crash, Curved vel new #{@curvedVelocityFactor}"
       control.ignore()
 
     reduceCurvedVelocityFactor: ->
-      @curvedVelocityFactor = 0.97 * @curvedVelocityFactor
+      @curvedVelocityFactor = 0.985 * @curvedVelocityFactor
 
     switchDirection: ->
       if @switchRight
