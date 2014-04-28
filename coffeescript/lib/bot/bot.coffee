@@ -75,7 +75,7 @@ module.exports = (winston, physics) ->
 
       tick = @race.currentTick
       @physics.initThrottleAndAccelerationRatio dataPoint(tick - 2), dataPoint(tick - 1)
-      winston.verbose @physics.throttleAndAccelerationRatio
+      winston.verbose "#{@logPrefix()};throttleAndAccelerationRatio:", @physics.throttleAndAccelerationRatio
 
     initMaxSlipFactor: ->
       return if @maxSlipInitialized or @race.getCarAngle(@color) is 0
@@ -86,8 +86,8 @@ module.exports = (winston, physics) ->
       b = v / r * 180 / Math.PI
       bslip = b - a
       vslip = r * b * Math.PI / 180
-      @factorMaxSlip = vslip * vslip / r
-      console.log @logPrefix()  + ";initMaxSlipFactor;a:#{a}, v:#{v}, r:#{r}, b:#{b}, bs:#{bslip}, vs:#{vslip}, fac:#{@factorMaxSlip}"
+      @factorMaxSlip = 0.97 * vslip * vslip / r
+      winston.warn @logPrefix()  + ";initMaxSlipFactor;a:#{a}, v:#{v}, r:#{r}, b:#{b}, bs:#{bslip}, vs:#{vslip}, fac:#{@factorMaxSlip}"
       @maxSlipInitialized = yes
 
     setThrottle: (throttle) ->
@@ -137,26 +137,40 @@ module.exports = (winston, physics) ->
 
     adjustVelocity: ->
       if @race.straightToFinish @color
-        @targetVelocity = 50
-        @adjustThrottle()
-        return
+        @targetVelocity = 100
+        return @adjustThrottle()
 
-      straightDistance = @race.straightDistanceAhead(@color)
-      bendedPieceIndex = @race.nextBendedPieceIndex(@color)
-      radius = @race.getRadiusOnLane bendedPieceIndex, @race.getCarLane(@color)
-      @targetVelocity = @maxVelocityForRadius radius
-      @adjustThrottle straightDistance
+      if @onBendedPiece() and @predictAngle() > @race.maxAngle - 2
+        @targetVelocity = @maxVelocityForRadius @getRadius() / 2
+        return @adjustThrottle()
+
+      bendedPieces = @race.bendedPiecesAhead @color
+
+      throttles = for {radius, distance} in bendedPieces
+        targetVelocity = @maxVelocityForRadius radius
+        @throttleForVelocityInDistance targetVelocity, distance
+
+      @setThrottle(Math.min throttles...)
+
+    predictAngle: ->
+      angle = @race.getCarAngle(@color)
+      angleS = @race.getAngularSpeed(@color)
+      angleSC = @race.getAngularSpeedChange(@color)
+      Math.abs(angle + 5 * angleS + 4 * angleSC)
 
     maxVelocityForRadius: (radius) ->
-      # v^2 / r = 0.39
-
+      # v^2 / r = @factorMaxSlip
       Math.sqrt(@factorMaxSlip * radius)
 
 
     adjustThrottle: (distance = 0) ->
-      velocity = @race.getVelocity @color
-      @setThrottle @physics.optimalThrottleForVelocityInDistance @targetVelocity, distance, velocity
+      @setThrottle @throttleForVelocityInDistance @targetVelocity, distance
 
+    throttleForVelocityInDistance: (targetVelocity, distance = 0) ->
+      if distance > 0
+        distance += 30
+      velocity = @race.getVelocity @color
+      @physics.optimalThrottleForVelocityInDistance targetVelocity, distance, velocity
 
 #    predictAngleSpeedChange: ->
 #      return 0 unless @angleParams?
