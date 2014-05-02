@@ -1,4 +1,4 @@
-module.exports = (winston, physics) ->
+module.exports = (winston, physics, rref) ->
   class Bot
     logOnEveryNthTick = 1
     headerLogged = no
@@ -14,6 +14,7 @@ module.exports = (winston, physics) ->
       @maxSlipInitialized = no
       @factorMaxSlip = 0.5
       @maxSlipAngle = 0
+      @slipTick = 0
 
 #      if @color is 'red'
 #        @throttle = 0.7
@@ -34,6 +35,7 @@ module.exports = (winston, physics) ->
     carPositions: (data, control) ->
       @initPhysicsParameters()
       @initMaxSlipFactor()
+      @angleStuff()
 
       @adjustVelocity()
       @maxSlipAngle = Math.max(@maxSlipAngle, @race.getCarAngle(@color))
@@ -88,15 +90,21 @@ module.exports = (winston, physics) ->
     initMaxSlipFactor: ->
       return if @maxSlipInitialized or @race.getCarAngle(@color) is 0
 
+
       a = Math.abs @race.getCarAngle @color
       v = @race.getVelocity @color
       r = @getRadius()
       b = v / r * 180 / Math.PI
       bslip = b - a
       vslip = r * b * Math.PI / 180
-      @factorMaxSlip = 0.97 * vslip * vslip / r
-      winston.warn @logPrefix()  + ";initMaxSlipFactor;a:#{a}, v:#{v}, r:#{r}, b:#{b}, bs:#{bslip}, vs:#{vslip}, fac:#{@factorMaxSlip}"
-      @maxSlipInitialized = yes
+
+      @angleStuff()
+
+      @slipTick = @slipTick + 1
+      if @slipTick > 3
+        @maxSlipInitialized = yes
+        @factorMaxSlip = 0.97 * vslip * vslip / r
+        winston.warn @logPrefix()  + ";initMaxSlipFactor;a:#{a}, v:#{v}, r:#{r}, b:#{b}, bs:#{bslip}, vs:#{vslip}, fac:#{@factorMaxSlip}"
 
     setThrottle: (throttle) ->
       if throttle < 0
@@ -124,8 +132,10 @@ module.exports = (winston, physics) ->
       angleSC = @race.getAngularSpeedChange @color
 
       log1 = "#{@logPrefix()};#{throttle};#{velocity};#{acceleration};"
-      log2 = "#{angle};#{angleS};#{angleSC};#{radius};#{predict?.velocity};#{predict?.acceleration}"
-      winston.info log1 + log2
+      log2 = "#{angle};#{angleS};#{angleSC};#{radius}"
+      log2a = ";#{predict?.velocity};#{predict?.acceleration}"
+      log3 = ";#{@constants?[0]};#{@constants?[1]};#{@constants?[2]};#{@constants?[3]}"
+      winston.info log1 + log2 + log3
 
     logPrefix: ->
       gameTick = @race.currentTick
@@ -144,6 +154,9 @@ module.exports = (winston, physics) ->
     getRadiusOnLane: (pieceIndex) -> @race.getRadiusOnLane pieceIndex, @race.getCarLane(@color)
 
     adjustVelocity: ->
+      @targetVelocity = 5.4
+      return @adjustThrottle()
+
       if @race.straightToFinish @color
         @targetVelocity = 100
         return @adjustThrottle()
@@ -176,8 +189,8 @@ module.exports = (winston, physics) ->
       @setThrottle @throttleForVelocityInDistance @targetVelocity, distance
 
     throttleForVelocityInDistance: (targetVelocity, distance = 0) ->
-      if distance > 0
-        distance += 20
+#      if distance > 0
+#        distance += 20
       velocity = @race.getVelocity @color
       @physics.optimalThrottleForVelocityInDistance targetVelocity, distance, velocity
 
@@ -191,27 +204,48 @@ module.exports = (winston, physics) ->
 #      c0 + (angularSpeed1 * c1 + c2 * velocity) + angle2 * c2 * velocity
 #
 #
-#    angleStuff: ->
-#      return if @race.getCarAngle(@color) is 0
-#      tick = @race.currentTick
-#
+    angleStuff: ->
+      return if @race.getCarAngle(@color) is 0
+      tick = @race.currentTick
+
 #      if @angleParams?
 #        return
-#
-#      if @race.getAngularSpeedChange(@color, tick - 2) > 0
-#        aSC2 = @race.getAngularSpeedChange(@color, tick - 2)
-#        aSC1 = @race.getAngularSpeedChange(@color, tick - 1)
-#        aSC0 = @race.getAngularSpeedChange(@color, tick)
-#        aS1 = @race.getAngularSpeed(@color, tick - 1)
-#
-#        c3 = ((aSC0 - aS1 * (aSC1 / aSC2 - 1)) / aSC2) - 1
-#        c2 = c3 / @race.getVelocity(@color)
-#        c1 = aSC1 / aSC2 - 1 - c3
-#
-#        c0 = aSC0
-#
-#        @angleParams = {c0, c1, c2}
+
+      if @race.getAngularSpeedChange(@color, tick - 2) isnt 0
+        aSC2 = @race.getAngularSpeedChange(@color, tick - 2)
+        aSC1 = @race.getAngularSpeedChange(@color, tick - 1)
+        aSC0 = @race.getAngularSpeedChange(@color, tick)
+        aS3 = @race.getAngularSpeed(@color, tick - 3)
+        aS2 = @race.getAngularSpeed(@color, tick - 2)
+        aS1 = @race.getAngularSpeed(@color, tick - 1)
+        a2 = @race.getCarAngle(@color, tick - 2)
+        a3 = @race.getCarAngle(@color, tick - 3)
+        a4 = @race.getCarAngle(@color, tick - 4)
+        v2 = @race.getVelocity(@color, tick - 2)
+        v1 = @race.getVelocity(@color, tick - 1)
+        v0 = @race.getVelocity(@color, tick)
+
+        c3 = ((aSC0 - aS1 * (aSC1 / aSC2 - 1)) / aSC2) - 1
+        c2 = c3 / @race.getVelocity(@color)
+        c1 = aSC1 / aSC2 - 1 - c3
+
+        c0 = aSC0
+        r = @getRadius()
+
+        solved = rref [
+          [v2*v2/r, aS1, v2 * (aS1 + a2), aSC0]
+          [v1*v1/r, aS2, v1 * (aS2 + a3), aSC1]
+          [v0*v0/r, aS3, v0 * (aS3 + a4), aSC2]
+        ]
+        @constants = (row[-1..][0] for row in solved)
+        @constants.push @constants[0] * (v0*v0) / r
 
 
+        #winston.warn @logPrefix() + ";aSC2;aSC1;aSC0;aS1;c3;c2;c1;c0"
+        #winston.warn @logPrefix() + ";#{aSC2};#{aSC1};#{aSC0};#{aS1};#{c3};#{c2};#{c1};#{c0}"
+
+        @angleParams = {c0, c1, c2}
+
+        #winston.warn @logPrefix() + ";#{@constants?[0]};#{@constants?[1]};#{@constants?[2]}"
 
 
