@@ -26,3 +26,5 @@ module.exports =
     module: 'objects'
   winston:
     module: 'winston'
+  rref:
+    module: 'rref'
